@@ -104,7 +104,7 @@ PPO_WEIGHT_STATE_KEYS = (
 )
 PPO_TRAIN_ACTION_KEYS = PPO_WEIGHT_STATE_KEYS + ('kalman_process_scale', 'kalman_obs_scale')
 PPO_TRAIN_ACTION_DIM = len(PPO_TRAIN_ACTION_KEYS)
-PPO_ONLINE_ACTION_DIM = 8
+PPO_ONLINE_ACTION_DIM = 7
 PPO_STATE_DIM = 46
 
 
@@ -2623,7 +2623,6 @@ def derive_online_control_params_from_weights(
     initial_weights,
     memory_blend,
     surface_relaxation,
-    surface_decay_depth,
     deep_inertia,
     deep_anchor,
     surface_skin_cooling_coef,
@@ -2633,7 +2632,6 @@ def derive_online_control_params_from_weights(
     base_controls = {
         'memory_blend': float(np.clip(memory_blend, 0.0, 1.0)),
         'surface_relaxation': float(np.clip(surface_relaxation, 0.0, 1.0)),
-        'surface_decay_depth': float(np.clip(surface_decay_depth, 1.5, 6.5)),
         'deep_inertia': float(np.clip(deep_inertia, 0.0, 0.95)),
         'deep_anchor': float(np.clip(deep_anchor, 0.0, 0.5)),
         'surface_skin_cooling_coef': float(np.clip(surface_skin_cooling_coef, 0.005, 0.08)),
@@ -2667,13 +2665,6 @@ def derive_online_control_params_from_weights(
         - 0.02 * continuity_pull
         - 0.03 * smooth_pull
     )
-    surface_decay_shift = (
-        -0.28 * strat_pull
-        -0.22 * smooth_pull
-        -0.18 * deepwarm_pull
-        + 0.20 * mixing_pull
-        + 0.10 * obs_pull
-    )
     skin_cooling_shift = (
         0.004 * obs_pull
         + 0.003 * heat_pull
@@ -2694,9 +2685,6 @@ def derive_online_control_params_from_weights(
 
     base_controls['memory_blend'] = float(np.clip(base_controls['memory_blend'] + memory_shift, 0.68, 0.92))
     base_controls['surface_relaxation'] = float(np.clip(base_controls['surface_relaxation'] + surface_shift, 0.06, 0.24))
-    base_controls['surface_decay_depth'] = float(
-        np.clip(base_controls['surface_decay_depth'] + surface_decay_shift, 2.0, 6.0)
-    )
     base_controls['deep_inertia'] = float(np.clip(base_controls['deep_inertia'] + deep_inertia_shift, 0.40, 0.90))
     base_controls['deep_anchor'] = float(np.clip(base_controls['deep_anchor'] + deep_anchor_shift, 0.02, 0.22))
     base_controls['surface_skin_cooling_coef'] = float(
@@ -2923,7 +2911,6 @@ def apply_online_ppo_action(control_params, kalman_scales, action):
     action = np.asarray(action, dtype=np.float32)[:PPO_ONLINE_ACTION_DIM]
     updated_controls = dict(control_params)
     updated_scales = dict(kalman_scales)
-    action_len = int(len(action))
 
     updated_controls['memory_blend'] = update_control_value(
         max(control_params['memory_blend'], 0.72),
@@ -2960,23 +2947,8 @@ def apply_online_ppo_action(control_params, kalman_scales, action):
         0.045,
         step_size=0.08,
     )
-    if action_len >= 8:
-        updated_controls['surface_decay_depth'] = update_control_value(
-            max(control_params.get('surface_decay_depth', 4.0), 2.0),
-            action[5],
-            2.0,
-            6.0,
-            step_size=0.08,
-        )
-        process_action = action[6]
-        obs_action = action[7]
-    else:
-        updated_controls['surface_decay_depth'] = float(np.clip(control_params.get('surface_decay_depth', 4.0), 2.0, 6.0))
-        process_action = action[5] if action_len >= 6 else 0.0
-        obs_action = action[6] if action_len >= 7 else 0.0
-
-    updated_scales['process'] = update_control_value(kalman_scales['process'], process_action, 0.6, 2.0, step_size=0.06)
-    updated_scales['obs'] = update_control_value(kalman_scales['obs'], obs_action, 0.8, 3.0, step_size=0.06)
+    updated_scales['process'] = update_control_value(kalman_scales['process'], action[5], 0.6, 2.0, step_size=0.06)
+    updated_scales['obs'] = update_control_value(kalman_scales['obs'], action[6], 0.8, 3.0, step_size=0.06)
 
     return updated_controls, updated_scales
 
@@ -2997,7 +2969,6 @@ def train_model(
     ppo_max_updates_run=None,
     ppo_eval_depth_points=80,
     ppo_use_kalman_reward=False,
-    ppo_tune_kalman=False,
     ppo_apply_post_physics=False,
     base_kalman_process_std=0.3,
     base_kalman_obs_std_surface=0.5,
@@ -3156,7 +3127,7 @@ def train_model(
         'validation': None,
     }
     ppo_controller = None
-    ppo_tune_kalman = bool(ppo_tune_kalman)
+    ppo_tune_kalman = False
     if use_ppo:
         ppo_controller = PPOController(state_dim=PPO_STATE_DIM, action_dim=PPO_TRAIN_ACTION_DIM, device=device)
 
@@ -3743,7 +3714,6 @@ def run_seasonal_segmented_pipeline(
     ppo_max_updates_run,
     ppo_eval_depth_points,
     ppo_use_kalman_reward,
-    ppo_tune_kalman,
     ppo_apply_post_physics,
     kalman_prior_std,
     kalman_process_std,
@@ -3843,7 +3813,6 @@ def run_seasonal_segmented_pipeline(
             ppo_max_updates_run=ppo_max_updates_run,
             ppo_eval_depth_points=min(ppo_eval_depth_points, depth_points),
             ppo_use_kalman_reward=ppo_use_kalman_reward,
-            ppo_tune_kalman=ppo_tune_kalman,
             ppo_apply_post_physics=ppo_apply_post_physics,
             base_kalman_process_std=kalman_process_std,
             base_kalman_obs_std_surface=kalman_obs_std_surface,
@@ -4214,7 +4183,6 @@ def build_online_ppo_rolling_grid(
         initial_weights=initial_weights,
         memory_blend=memory_blend,
         surface_relaxation=surface_relaxation,
-        surface_decay_depth=surface_decay_depth,
         deep_inertia=deep_inertia,
         deep_anchor=deep_anchor,
         surface_skin_cooling_coef=surface_skin_cooling_coef,
@@ -4222,6 +4190,8 @@ def build_online_ppo_rolling_grid(
     kalman_scales = dict(initial_kalman_scales)
     policy_weights = dict(initial_weights)
     surface_decay_depth = float(max(surface_decay_depth, 1e-6))
+    surface_weights = np.exp(-depths / surface_decay_depth)
+    surface_weights[0] = 1.0
 
     lst_surface = None
     if 'SurfaceBulkTarget_C' in df.columns:
@@ -4258,9 +4228,6 @@ def build_online_ppo_rolling_grid(
                     base_surface_skin_cooling_coef=surface_skin_cooling_coef,
                 )
                 surface_error = float(np.clip(runtime_surface_target - rolled_today[0], -6.0, 6.0))
-                current_surface_decay_depth = float(max(control_params.get('surface_decay_depth', surface_decay_depth), 1.0e-6))
-                surface_weights = np.exp(-depths / current_surface_decay_depth)
-                surface_weights[0] = 1.0
                 nudge_weights = surface_weights * (mixed_transition + 0.08 * (1.0 - mixed_transition))
                 rolled_today = rolled_today + control_params['surface_relaxation'] * surface_error * nudge_weights
 
@@ -4294,10 +4261,7 @@ def build_online_ppo_rolling_grid(
                 initial_surface_error = float(np.clip(initial_surface_target - rolled_grid[0, 0], -6.0, 6.0))
                 initial_mld = float(np.clip(mixed_layer_depth[0], 0.5, max(depths[-1] * 0.9, 0.5)))
                 mixed_transition0 = 1.0 / (1.0 + np.exp((depths - (initial_mld + 0.75)) / 0.9))
-                initial_surface_decay_depth = float(max(control_params.get('surface_decay_depth', surface_decay_depth), 1.0e-6))
-                surface_weights0 = np.exp(-depths / initial_surface_decay_depth)
-                surface_weights0[0] = 1.0
-                nudge_weights0 = surface_weights0 * (mixed_transition0 + 0.08 * (1.0 - mixed_transition0))
+                nudge_weights0 = surface_weights * (mixed_transition0 + 0.08 * (1.0 - mixed_transition0))
                 rolled_grid[:, 0] += control_params['surface_relaxation'] * initial_surface_error * nudge_weights0
             if air_temp is not None and air_temp[0] < 0.0:
                 rolled_grid[0, 0] = 0.0
@@ -4396,7 +4360,6 @@ def build_online_ppo_rolling_grid(
                         'date': pd.Timestamp(df['Date'].iloc[day_idx]),
                         'memory_blend': control_params['memory_blend'],
                         'surface_relaxation': control_params['surface_relaxation'],
-                        'surface_decay_depth': control_params['surface_decay_depth'],
                         'deep_inertia': control_params['deep_inertia'],
                         'deep_anchor': control_params['deep_anchor'],
                         'surface_skin_cooling_coef': control_params['surface_skin_cooling_coef'],
@@ -4411,7 +4374,6 @@ def build_online_ppo_rolling_grid(
                 'Date': pd.Timestamp(df['Date'].iloc[day_idx]),
                 'memory_blend': control_params['memory_blend'],
                 'surface_relaxation': control_params['surface_relaxation'],
-                'surface_decay_depth': control_params['surface_decay_depth'],
                 'deep_inertia': control_params['deep_inertia'],
                 'deep_anchor': control_params['deep_anchor'],
                 'surface_skin_cooling_coef': control_params['surface_skin_cooling_coef'],
@@ -4976,7 +4938,6 @@ def main():
     parser.add_argument('--ppo-max-updates-run', type=int, default=None, help='Maximum PPO update steps allowed in this train run; after reaching it, PPO stops learning and only executes the current policy')
     parser.add_argument('--ppo-eval-depth-points', type=int, default=80, help='Depth points used in PPO validation probes')
     parser.add_argument('--ppo-use-kalman-reward', action='store_true', help='Include Kalman-filtered validation RMSE in the PPO reward when profile observations are available')
-    parser.add_argument('--ppo-tune-kalman', action='store_true', help='Allow training-stage PPO to tune Kalman process/observation scales during main PINN training')
     parser.add_argument('--kalman-prior-std', type=float, default=2.0, help='Initial state prior std for the Kalman filter (deg C)')
     parser.add_argument('--kalman-process-std', type=float, default=0.3, help='Process noise std for the Kalman filter (deg C)')
     parser.add_argument('--kalman-obs-std-surface', type=float, default=0.5, help='Surface observation std for the Kalman filter (deg C)')
@@ -5082,7 +5043,6 @@ def main():
     print("PPO stage enabled:" if args.use_ppo else "PPO stage disabled:", bool(args.use_ppo))
     if args.use_ppo:
         print(f"PPO max updates this run: {args.ppo_max_updates_run if args.ppo_max_updates_run is not None else 'unlimited'}")
-        print(f"PPO tune Kalman in training: {bool(args.ppo_tune_kalman and training_use_ppo)}")
     print("Kalman stage enabled:" if args.use_kalman else "Kalman stage disabled:", bool(args.use_kalman))
     print("Bottom observation enabled:" if args.use_bottom_observation else "Bottom observation disabled:", bool(args.use_bottom_observation))
     print("Initial condition mode:", args.initial_condition_mode)
@@ -5224,13 +5184,12 @@ def main():
             val_profile_obs=val_profile_obs,
             assim_profile_obs=assim_profile_obs,
             use_kalman=args.use_kalman,
-            use_ppo=training_use_ppo,
+            use_ppo=False,
             ppo_control_interval=args.ppo_control_interval,
             ppo_rollout_steps=args.ppo_rollout_steps,
             ppo_max_updates_run=args.ppo_max_updates_run,
             ppo_eval_depth_points=args.ppo_eval_depth_points,
             ppo_use_kalman_reward=(args.ppo_use_kalman_reward and training_use_ppo),
-            ppo_tune_kalman=(args.ppo_tune_kalman and training_use_ppo),
             ppo_apply_post_physics=args.apply_post_physics,
             kalman_prior_std=args.kalman_prior_std,
             kalman_process_std=args.kalman_process_std,
@@ -5299,13 +5258,12 @@ def main():
             device=args.device,
             train_profile_obs=train_profile_obs,
             ppo_validation_profile_obs=val_profile_obs,
-            use_ppo=training_use_ppo,
+            use_ppo=False,
             ppo_control_interval=args.ppo_control_interval,
             ppo_rollout_steps=args.ppo_rollout_steps,
             ppo_max_updates_run=args.ppo_max_updates_run,
             ppo_eval_depth_points=args.ppo_eval_depth_points,
             ppo_use_kalman_reward=(args.ppo_use_kalman_reward and training_use_ppo),
-            ppo_tune_kalman=(args.ppo_tune_kalman and training_use_ppo),
             ppo_apply_post_physics=args.apply_post_physics,
             base_kalman_process_std=args.kalman_process_std,
             base_kalman_obs_std_surface=args.kalman_obs_std_surface,
@@ -5541,7 +5499,6 @@ def main():
                 "Predict PPO mapped controls | "
                 f"memory_blend={first_diag['memory_blend']:.3f} | "
                 f"surface_relaxation={first_diag['surface_relaxation']:.3f} | "
-                f"surface_decay_depth={first_diag['surface_decay_depth']:.3f} | "
                 f"deep_inertia={first_diag['deep_inertia']:.3f} | "
                 f"deep_anchor={first_diag['deep_anchor']:.3f} | "
                 f"surface_skin_cooling_coef={first_diag['surface_skin_cooling_coef']:.3f}"
@@ -5552,7 +5509,6 @@ def main():
                 "Online PPO controls | "
                 f"memory_blend={last_online['memory_blend']:.3f} | "
                 f"surface_relaxation={last_online['surface_relaxation']:.3f} | "
-                f"surface_decay_depth={last_online['surface_decay_depth']:.3f} | "
                 f"deep_inertia={last_online['deep_inertia']:.3f} | "
                 f"deep_anchor={last_online['deep_anchor']:.3f} | "
                 f"surface_skin_cooling_coef={last_online['surface_skin_cooling_coef']:.3f}"
