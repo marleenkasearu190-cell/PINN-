@@ -27,6 +27,16 @@
 
 更完整的实验定位见 [`EXPERIMENTS.md`](./EXPERIMENTS.md)。
 
+## 代表图像
+
+主线 `11维测试/九` 的 Mohonk 2017 年度温度剖面热图：
+
+![Mohonk 2017 11D mainline year heatmap](./docs/figures/mohonk_2017_11d9_year_heatmap.png)
+
+Mohonk 2017 关键版本误差对比：
+
+![Mohonk 2017 RMSE error comparison](./docs/figures/mohonk_2017_rmse_error_comparison.png)
+
 ## 快速入口
 
 - 当前 11 维主线：[`第三版/PPO策略调控_11维主线_20260426.py`](./第三版/PPO策略调控_11维主线_20260426.py)

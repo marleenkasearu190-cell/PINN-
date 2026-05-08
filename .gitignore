@@ -29,3 +29,8 @@ scorecard_*.csv
 *.tiff
 *.nc
 *.grib
+
+# Curated documentation figures
+!docs/
+!docs/figures/
+!docs/figures/*.png
