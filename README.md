@@ -9,6 +9,7 @@
 - 当前 11 维主线：[`第三版/PPO策略调控_11维主线_20260426.py`](./第三版/PPO策略调控_11维主线_20260426.py)
 - 热收支实验线：[`第三版/PPO策略调控_热收支A线_20260428.py`](./第三版/PPO策略调控_热收支A线_20260428.py)
 - 评分工具：[`第三版/lake_profile_scorecard.py`](./第三版/lake_profile_scorecard.py)
+- 本地复现说明：[`REPRODUCE.md`](./REPRODUCE.md)
 - 数据格式说明：[`DATA.md`](./DATA.md)
 - 模型原理说明：[`MODEL.md`](./MODEL.md)
 - 实验结论摘要：[`EXPERIMENTS.md`](./EXPERIMENTS.md)
@@ -22,6 +23,14 @@ pip install -r requirements.txt
 ```
 
 本仓库不包含原始数据、训练 checkpoint 和大批量实验输出。运行训练或预测前，需要按 [`DATA.md`](./DATA.md) 准备 ERA5、LST 和剖面观测数据。
+
+如果是在当前本机环境复现 Mohonk 2017，可直接使用本地已有的第三版 11 维主线 checkpoint：
+
+```text
+E:\pycharm\PINN\第三版\11维测试\9\mohonk_lake_2017_pinn_model_checkpoint.pt
+```
+
+完整本机路径和预测/评分命令见 [`REPRODUCE.md`](./REPRODUCE.md)。
 
 ## 最小运行示例
 
