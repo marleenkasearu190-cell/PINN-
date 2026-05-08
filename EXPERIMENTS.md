@@ -48,20 +48,20 @@
 
 下一步建议优先做预测侧单因素对照，检查 embedded PPO policy、Kalman 参数和 heat-budget loss 在预测阶段的耦合。
 
-## 本机 checkpoint 定位
+## checkpoint 定位
 
-本机 `E:\pycharm\PINN` 已保留可复现 checkpoint。推荐用于当前主线复现的是：
+当前主线复现建议使用第三版 11 维模型 checkpoint：
 
 ```text
-E:\pycharm\PINN\第三版\11维测试\9\mohonk_lake_2017_pinn_model_checkpoint.pt
+11维测试/9/mohonk_lake_2017_pinn_model_checkpoint.pt
 ```
 
-该 checkpoint 为 11 维输入模型，包含嵌入的 PPO policy bundle，可直接用于 `第三版/PPO策略调控_11维主线_20260426.py --mode predict`。完整命令见 [`REPRODUCE.md`](./REPRODUCE.md)。
+该 checkpoint 为 11 维输入模型，包含嵌入的 PPO policy bundle，可直接用于 `第三版/PPO策略调控_11维主线_20260426.py --mode predict`。公开复现模板见 [`REPRODUCE.md`](./REPRODUCE.md)。
 
 热收支 A 线可参考：
 
-- `E:\pycharm\PINN\第三版\11维测试\16\mohonk_lake_2017_pinn_model_checkpoint.pt`
-- `E:\pycharm\PINN\第三版\11维测试\17\mohonk_lake_2017_pinn_model_checkpoint.pt`
+- `11维测试/16/mohonk_lake_2017_pinn_model_checkpoint.pt`
+- `11维测试/17/mohonk_lake_2017_pinn_model_checkpoint.pt`
 
 ## 结果文件管理
 
