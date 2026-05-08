@@ -2,6 +2,12 @@
 
 第三版是当前继续研究的主线目录，包含 11 维 PINN / PPO 脚本、热收支实验线和剖面评分工具。
 
+更多说明：
+
+- 数据格式：[`../DATA.md`](../DATA.md)
+- 模型原理：[`../MODEL.md`](../MODEL.md)
+- 实验结论：[`../EXPERIMENTS.md`](../EXPERIMENTS.md)
+
 ## 文件
 
 | 文件 | 用途 |

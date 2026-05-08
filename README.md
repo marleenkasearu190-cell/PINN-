@@ -2,13 +2,62 @@
 
 湖泊温度剖面预测与物理约束 PINN / PPO 实验仓库。
 
-当前仓库主入口为 `第三版/`。第二版虽然在 Mohonk 2017 上取得过最低 RMSE，但它属于旧输入结构，已经移入归档，仅作为历史对照。
+当前主入口是 `第三版/`。第二版虽然在 Mohonk 2017 上取得过最低 RMSE，但它属于旧输入结构，已移入 `归档/`，仅作为历史对照。
 
-## 当前入口
+## 快速入口
 
-- 主线脚本：[`第三版/PPO策略调控_11维主线_20260426.py`](./第三版/PPO策略调控_11维主线_20260426.py)
-- 实验线脚本：[`第三版/PPO策略调控_热收支A线_20260428.py`](./第三版/PPO策略调控_热收支A线_20260428.py)
+- 当前 11 维主线：[`第三版/PPO策略调控_11维主线_20260426.py`](./第三版/PPO策略调控_11维主线_20260426.py)
+- 热收支实验线：[`第三版/PPO策略调控_热收支A线_20260428.py`](./第三版/PPO策略调控_热收支A线_20260428.py)
 - 评分工具：[`第三版/lake_profile_scorecard.py`](./第三版/lake_profile_scorecard.py)
+- 数据格式说明：[`DATA.md`](./DATA.md)
+- 模型原理说明：[`MODEL.md`](./MODEL.md)
+- 实验结论摘要：[`EXPERIMENTS.md`](./EXPERIMENTS.md)
+
+## 环境
+
+建议使用 Python 3.10 或更新版本。
+
+```powershell
+pip install -r requirements.txt
+```
+
+本仓库不包含原始数据、训练 checkpoint 和大批量实验输出。运行训练或预测前，需要按 [`DATA.md`](./DATA.md) 准备 ERA5、LST 和剖面观测数据。
+
+## 最小运行示例
+
+训练主线模型：
+
+```powershell
+python ".\第三版\PPO策略调控_11维主线_20260426.py" `
+  --mode train `
+  --era5 "path\to\ERA5_daily.csv" `
+  --lst "path\to\LST_2017.csv" `
+  --profile-obs "path\to\profile_observations.csv" `
+  --profile-split-mode time_blocked `
+  --epochs 600 `
+  --output-dir "outputs\run_main"
+```
+
+使用已训练 checkpoint 预测：
+
+```powershell
+python ".\第三版\PPO策略调控_11维主线_20260426.py" `
+  --mode predict `
+  --era5 "path\to\ERA5_daily.csv" `
+  --lst "path\to\LST_2017.csv" `
+  --model-checkpoint-path "outputs\run_main\mohonk_lake_2017_pinn_model_checkpoint.pt" `
+  --output-dir "outputs\predict_main"
+```
+
+评分预测结果：
+
+```powershell
+python ".\第三版\lake_profile_scorecard.py" `
+  --truth "path\to\profile_truth.csv" `
+  --pred "outputs\predict_main\mohonk_lake_2017_pinn_temperature_depth_predictions.csv" `
+  --label "main_predict" `
+  --out-dir "outputs\score_main"
+```
 
 ## 版本定位
 
@@ -19,33 +68,15 @@
 | `归档/第二版/PPO策略控制.py` | 旧输入结构 PPO | `策略测试/七` | 数值 RMSE 最低，但不作为当前主线 |
 | `归档/第一版`、`归档/第零版` | 早期历史版本 | 早期流程 | 仅用于回溯 |
 
-## 第三版说明
-
-第三版路线的核心是让 PINN 从只学习 `T(z,t)`，升级为带条件输入的湖泊温度剖面模型，并结合物理约束、Kalman 同化和 PPO 调度。
-
-主要内容包括：
-
-- 11 维条件输入：时间、深度、季节项、气象 forcing、LST 和湖泊静态属性。
-- 物理约束：PDE、表面能量平衡、底部边界、初始条件、观测损失和温和结构约束。
-- Kalman 同化：用于融合剖面同化数据、表层 bulk 目标和可选底温信息。
-- PPO 调度：用于动态调节损失权重和 Kalman 参数。
-- 分层评分：先看物理底线，再看季节过程、数值精度、稳定性和热图观感。
-
-## 评分工具
-
-`第三版/lake_profile_scorecard.py` 用于把预测剖面 CSV 与真实剖面 CSV 对齐，并输出：
-
-- 物理底线：冬季逆温、夏季分层、秋季翻混、全年漂移、温跃层结构。
-- 关键季节过程：5 月升温、7 月表层高温、秋季翻混时间、冬季结构。
-- 数值精度：RMSE、MAE、bias、0-3 m 表层 RMSE、温跃层带 RMSE。
-- 附加诊断：深层误差、平滑度、热量分配等。
-
 ## 仓库结构
 
 ```text
 PINN-
 |-- README.md
-|-- .gitignore
+|-- DATA.md
+|-- MODEL.md
+|-- EXPERIMENTS.md
+|-- requirements.txt
 |-- 第三版/
 |   |-- PPO策略调控_11维主线_20260426.py
 |   |-- PPO策略调控_热收支A线_20260428.py
