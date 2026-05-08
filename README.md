@@ -37,6 +37,12 @@ Mohonk 2017 关键版本误差对比：
 
 ![Mohonk 2017 RMSE error comparison](./docs/figures/mohonk_2017_rmse_error_comparison.png)
 
+主线 `11维测试/九` 的月-深度误差诊断图。下图将每日预测剖面与 0-13 m 观测网格对齐后，按月份和深度统计误差；RMSE 反映误差强度，bias 反映预测相对观测的系统性偏高或偏低。该诊断显示，误差主要集中在春季表层升温阶段和秋季中深层翻混阶段。
+
+![Mohonk 2017 11D mainline RMSE month-depth heatmap](./docs/figures/mohonk_2017_11d9_rmse_heatmap_month_depth.png)
+
+![Mohonk 2017 11D mainline bias month-depth heatmap](./docs/figures/mohonk_2017_11d9_bias_heatmap_month_depth.png)
+
 ## 快速入口
 
 - 当前 11 维主线：[`第三版/PPO策略调控_11维主线_20260426.py`](./第三版/PPO策略调控_11维主线_20260426.py)
