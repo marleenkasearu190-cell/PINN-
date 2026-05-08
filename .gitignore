@@ -3,3 +3,17 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+
+# Local data and experiment outputs
+数据/
+11维测试/
+策略测试/
+score_outputs*/
+*.pt
+*.pth
+*.ckpt
+*.png
+*.tif
+*.tiff
+*.nc
+*.grib
