@@ -2,7 +2,7 @@
 
 湖泊温度剖面预测与物理约束 PINN / PPO 实验仓库。项目以 ERA5 气象强迫、MODIS LST 表面温度和湖泊剖面观测为输入，预测湖泊逐日水温深度剖面 `T(z,t)`，并用物理约束、Kalman 同化和 PPO 调度改进季节结构与数值精度。
 
-当前推荐继续研究的主入口是 `第四版/lake_pinn/`，它把 run9 后续主线整理为模块化 Python 包。`第三版/` 保留为已验证的单文件主线和历史对照；第二版虽然在 Mohonk 2017 上取得过最低 RMSE，但它属于旧输入结构，已移入 `归档/`，仅作为历史数值对照。
+当前推荐继续研究的主入口是 `第四版/lake_pinn/`，它把 run9 后续主线整理为模块化 Python 包。`第三版/` 已移入 `归档/第三版/`，保留为已验证的单文件主线和历史对照；第二版虽然在 Mohonk 2017 上取得过最低 RMSE，但它属于旧输入结构，也保留在 `归档/` 中。
 
 ## 项目状态
 
@@ -11,8 +11,8 @@
 当前定位：
 
 - `第四版/lake_pinn/` 是模块化 LakePINN 候选主线，支持 PINN、PPO、Kalman、滚动预测和分层评分。
-- `第三版/PPO策略调控_11维主线_20260426.py` 是当前 11 维 PINN + PPO/Kalman 主线。
-- `第三版/PPO策略调控_热收支A线_20260428.py` 是热收支 A 线实验方向。
+- `归档/第三版/PPO策略调控_11维主线_20260426.py` 是已归档的 11 维 PINN + PPO/Kalman 单文件主线。
+- `归档/第三版/PPO策略调控_热收支A线_20260428.py` 是已归档的热收支 A 线实验方向。
 - `归档/第二版/PPO策略控制.py` 是历史数值最优对照，不作为当前主线继续扩展。
 
 ## 结果快照
@@ -22,7 +22,7 @@
 | 实验 | RMSE | MAE | bias | 当前判断 |
 |---|---:|---:|---:|---|
 | `策略测试/七` | 1.051 | 0.734 | 0.024 | 数值精度最好，旧输入结构对照 |
-| `11维测试/九` | 1.498 | 1.061 | 0.188 | 当前 11 维主线候选 |
+| `11维测试/九` | 1.498 | 1.061 | 0.188 | 已归档 11 维稳定对照 |
 | `run9_resume_train_20260509` | 1.478 | 0.999 | 0.060 | 第四版续训候选增强，暂不直接替换主线 |
 | `official_predict_kalman` | 1.567 | 1.084 | 0.095 | 第四版官方预测展示/评分优先输出 |
 | `11维测试/十六` | 1.557 | 1.106 | 0.213 | 热收支 A3，对主线有参考价值 |
@@ -50,9 +50,9 @@ Mohonk 2017 关键版本误差对比：
 
 - 第四版模块化主入口：[`第四版/lake_pinn`](./第四版/lake_pinn)
 - 第四版更新说明：[`第四版/更新说明.md`](./第四版/更新说明.md)
-- 当前 11 维主线：[`第三版/PPO策略调控_11维主线_20260426.py`](./第三版/PPO策略调控_11维主线_20260426.py)
-- 热收支实验线：[`第三版/PPO策略调控_热收支A线_20260428.py`](./第三版/PPO策略调控_热收支A线_20260428.py)
-- 评分工具：[`第三版/lake_profile_scorecard.py`](./第三版/lake_profile_scorecard.py)
+- 第四版评分工具：[`第四版/lake_pinn/lake_profile_scorecard.py`](./第四版/lake_pinn/lake_profile_scorecard.py)
+- 已归档 11 维单文件主线：[`归档/第三版/PPO策略调控_11维主线_20260426.py`](./归档/第三版/PPO策略调控_11维主线_20260426.py)
+- 已归档热收支实验线：[`归档/第三版/PPO策略调控_热收支A线_20260428.py`](./归档/第三版/PPO策略调控_热收支A线_20260428.py)
 - 复现说明：[`REPRODUCE.md`](./REPRODUCE.md)
 - 数据格式说明：[`DATA.md`](./DATA.md)
 - 模型原理说明：[`MODEL.md`](./MODEL.md)
@@ -66,7 +66,7 @@ Mohonk 2017 关键版本误差对比：
 pip install -r requirements.txt
 ```
 
-根目录 `requirements.txt` 覆盖当前第三版主线代码。归档目录中的早期下载脚本可能还需要额外依赖，例如 `cdsapi`、`xarray` 或 `seaborn`。
+根目录 `requirements.txt` 覆盖当前第四版主线代码。归档目录中的早期下载脚本可能还需要额外依赖，例如 `cdsapi`、`xarray` 或 `seaborn`。
 
 ## 数据与复现
 
@@ -84,33 +84,40 @@ pip install -r requirements.txt
 训练主线模型：
 
 ```powershell
-python ".\第三版\PPO策略调控_11维主线_20260426.py" `
+Push-Location ".\第四版"
+python -m lake_pinn `
   --mode train `
-  --era5 "path\to\ERA5_daily.csv" `
-  --lst "path\to\LST_2017.csv" `
-  --profile-obs "path\to\profile_observations.csv" `
+  --era5 "..\path\to\ERA5_daily.csv" `
+  --lst "..\path\to\LST_2017.csv" `
+  --profile-obs "..\path\to\profile_observations.csv" `
   --profile-split-mode time_blocked `
+  --model-input-dim 11 `
   --epochs 600 `
-  --output-dir "outputs\run_main"
+  --output-dir "..\outputs\run_main"
+Pop-Location
 ```
 
 使用已训练 checkpoint 预测：
 
 ```powershell
-python ".\第三版\PPO策略调控_11维主线_20260426.py" `
+Push-Location ".\第四版"
+python -m lake_pinn `
   --mode predict `
-  --era5 "path\to\ERA5_daily.csv" `
-  --lst "path\to\LST_2017.csv" `
-  --model-checkpoint-path "outputs\run_main\mohonk_lake_2017_pinn_model_checkpoint.pt" `
-  --output-dir "outputs\predict_main"
+  --era5 "..\path\to\ERA5_daily.csv" `
+  --lst "..\path\to\LST_2017.csv" `
+  --model-checkpoint-path "..\outputs\run_main\mohonk_lake_2017_pinn_model_checkpoint.pt" `
+  --model-input-dim 11 `
+  --use-kalman `
+  --output-dir "..\outputs\predict_main"
+Pop-Location
 ```
 
 评分预测结果：
 
 ```powershell
-python ".\第三版\lake_profile_scorecard.py" `
+python ".\第四版\lake_pinn\lake_profile_scorecard.py" `
   --truth "path\to\profile_truth.csv" `
-  --pred "outputs\predict_main\mohonk_lake_2017_pinn_temperature_depth_predictions.csv" `
+  --pred "outputs\predict_main\mohonk_lake_2017_kalman_temperature_depth_predictions.csv" `
   --label "main_predict" `
   --out-dir "outputs\score_main"
 ```
@@ -119,9 +126,9 @@ python ".\第三版\lake_profile_scorecard.py" `
 
 | 目录/脚本 | 定位 | 对应实验 | 当前判断 |
 |---|---|---|---|
-| `第四版/lake_pinn/` | 模块化 PINN + PPO/Kalman 候选主线 | `run9_resume_train_20260509`、`official_predict_*` | 适合继续开发，暂不直接覆盖第三版结果 |
-| `第三版/PPO策略调控_11维主线_20260426.py` | 11 维 PINN + PPO/Kalman 主线 | `11维测试/九` | 当前推荐继续研究 |
-| `第三版/PPO策略调控_热收支A线_20260428.py` | 能量版热收支实验线 | `11维测试/十一` 到 `11维测试/十七` | 有价值，但暂不替代主线 |
+| `第四版/lake_pinn/` | 模块化 PINN + PPO/Kalman 候选主线 | `run9_resume_train_20260509`、`official_predict_*` | 当前推荐继续开发 |
+| `归档/第三版/PPO策略调控_11维主线_20260426.py` | 11 维 PINN + PPO/Kalman 单文件主线 | `11维测试/九` | 已归档为稳定对照 |
+| `归档/第三版/PPO策略调控_热收支A线_20260428.py` | 能量版热收支实验线 | `11维测试/十一` 到 `11维测试/十七` | 已归档，有参考价值 |
 | `归档/第二版/PPO策略控制.py` | 旧输入结构 PPO | `策略测试/七` | 数值 RMSE 最低，但不作为当前主线 |
 | `归档/第一版`、`归档/第零版` | 早期历史版本 | 早期流程 | 仅用于回溯 |
 
@@ -139,12 +146,8 @@ PINN-
 |   |-- README.md
 |   |-- 更新说明.md
 |   `-- lake_pinn/
-|-- 第三版/
-|   |-- PPO策略调控_11维主线_20260426.py
-|   |-- PPO策略调控_热收支A线_20260428.py
-|   |-- lake_profile_scorecard.py
-|   `-- README.md
 `-- 归档/
+    |-- 第三版/
     |-- 第二版/
     |-- 第一版/
     `-- 第零版/

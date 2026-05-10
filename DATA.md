@@ -1,6 +1,6 @@
 # 数据说明
 
-本仓库不直接上传原始数据、验证数据和训练输出。运行第三版脚本前，需要在本地准备 ERA5 forcing、LST 表面温度和剖面观测数据。
+本仓库不直接上传原始数据、验证数据和训练输出。运行第四版模块化入口或归档第三版脚本前，需要在本地准备 ERA5 forcing、LST 表面温度和剖面观测数据。
 
 ## 数据角色
 
@@ -70,7 +70,7 @@ Date,Temp_0m,Temp_1m,Temp_2m,Temp_3m
 
 ## Profile Split
 
-第三版默认使用 `--profile-split-mode time_blocked`。这会把剖面观测按时间块切分为：
+第四版和归档第三版默认使用 `--profile-split-mode time_blocked`。这会把剖面观测按时间块切分为：
 
 | 子集 | 用途 |
 |---|---|

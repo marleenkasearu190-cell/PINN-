@@ -25,12 +25,12 @@ Reference CSV:
 Example
 -------
 python lake_profile_scorecard.py ^
-  --truth "E:\\pycharm\\PINN\\数据\\mohonk\\验证\\MohonkLake_temp_2017_filled_from_2014_2017.csv" ^
-  --pred "E:\\pycharm\\PINN\\策略测试\\七\\mohonk_lake_2017_pinn_temperature_depth_predictions.csv" ^
+  --truth "path\\to\\profile_truth.csv" ^
+  --pred "outputs\\predict_a\\mohonk_lake_2017_pinn_temperature_depth_predictions.csv" ^
   --label "run7" ^
-  --pred "E:\\pycharm\\PINN\\11维测试\\一\\mohonk_lake_2017_pinn_temperature_depth_predictions.csv" ^
+  --pred "outputs\\predict_b\\mohonk_lake_2017_pinn_temperature_depth_predictions.csv" ^
   --label "11d_run1" ^
-  --out-dir "E:\\pycharm\\PINN\\第三版\\score_outputs"
+  --out-dir "outputs\\scorecard"
 """
 
 from __future__ import annotations

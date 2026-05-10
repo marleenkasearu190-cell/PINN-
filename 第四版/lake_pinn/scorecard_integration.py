@@ -6,7 +6,7 @@ def default_scorecard_script_path() -> Path:
     """Locate the shared scorecard script used by the experiment notebooks."""
     candidates = [
         Path(__file__).resolve().with_name('lake_profile_scorecard.py'),
-        PROJECT_DIR.parent / '第三版' / 'lake_profile_scorecard.py',
+        PROJECT_DIR.parent / '归档' / '第三版' / 'lake_profile_scorecard.py',
         PROJECT_DIR / 'lake_profile_scorecard.py',
     ]
     for candidate in candidates:
