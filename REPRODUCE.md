@@ -15,7 +15,7 @@ Prepare the following files:
 | PINN checkpoint | `checkpoints/mohonk_lake_2017_pinn_model_checkpoint.pt` | Trained model for predict mode |
 | Profile truth CSV | `data/profile_truth.csv` | Optional truth file for scoring |
 
-The expected data formats are described in [`DATA.md`](./DATA.md). The current recommended model line is the fourth-edition modular LakePINN pipeline described in [`MODEL.md`](./MODEL.md).
+The expected data formats are described in [`DATA.md`](./DATA.md). The current recommended model line is the fifth-edition raw PINN pipeline described in [`MODEL.md`](./MODEL.md).
 
 ## Environment
 
@@ -28,14 +28,12 @@ pip install -r requirements.txt
 ## Predict
 
 ```powershell
-Push-Location ".\第四版"
+Push-Location ".\第五版"
 python -m lake_pinn `
   --mode predict `
   --era5 "..\data\ERA5_daily.csv" `
   --lst "..\data\LST_2017.csv" `
   --model-checkpoint-path "..\checkpoints\mohonk_lake_2017_pinn_model_checkpoint.pt" `
-  --model-input-dim 11 `
-  --use-kalman `
   --output-dir "..\outputs\predict_main" `
   --device cpu
 Pop-Location
@@ -44,16 +42,15 @@ Pop-Location
 Expected outputs:
 
 - `mohonk_lake_2017_pinn_temperature_depth_predictions.csv`
-- `mohonk_lake_2017_kalman_temperature_depth_predictions.csv`
 - `mohonk_lake_2017_year_heatmap.png`
 - `mohonk_lake_2017_prediction_outputs_manifest.csv`
 
 ## Score
 
 ```powershell
-python ".\第四版\lake_pinn\lake_profile_scorecard.py" `
+python ".\第五版\lake_pinn\lake_profile_scorecard.py" `
   --truth ".\data\profile_truth.csv" `
-  --pred ".\outputs\predict_main\mohonk_lake_2017_kalman_temperature_depth_predictions.csv" `
+  --pred ".\outputs\predict_main\mohonk_lake_2017_pinn_temperature_depth_predictions.csv" `
   --label "main_predict" `
   --out-dir ".\outputs\score_main"
 ```
@@ -64,9 +61,10 @@ The score script writes `scorecard_summary.csv`, `scorecard_scores.csv`, `scorec
 
 When reporting results, keep three things separate:
 
-- The current research mainline: `第四版/lake_pinn/`.
+- The current research mainline: `第五版/lake_pinn/`.
+- The archived fourth-edition modular reference: `归档/第四版/lake_pinn/`.
 - The archived third-edition single-file reference: `归档/第三版/PPO策略调控_11维主线_20260426.py`.
 - Historical numeric baselines: archived second-edition runs such as `策略测试/七`.
 - Experimental physics variants: heat-budget A-line runs such as `11维测试/十六` and `11维测试/十七`.
 
-The project position is summarized in [`EXPERIMENTS.md`](./EXPERIMENTS.md): the historical second-edition route has the lowest Mohonk 2017 RMSE, the third-edition 11-feature route remains an archived reference, and the fourth-edition modular package is the recommended line for continued research.
+The project position is summarized in [`EXPERIMENTS.md`](./EXPERIMENTS.md): the historical second-edition route has the lowest Mohonk 2017 RMSE, the third- and fourth-edition routes remain archived references, and the fifth-edition raw PINN package is the recommended line for continued research.

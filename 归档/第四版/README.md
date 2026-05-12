@@ -1,11 +1,11 @@
 # 第四版：模块化 LakePINN
 
-第四版把 `11维测试/九` 之后的主线代码整理为 `lake_pinn` Python 包，保留 PINN、PPO 动态调度、Kalman 同化、滚动预测和分层评分流程。它的定位是下一阶段继续开发的候选主线源码，不包含训练 checkpoint、预测 CSV、热图或完整实验输出。
+第四版把 `11维测试/九` 之后的主线代码整理为 `lake_pinn` Python 包，保留 PINN、PPO 动态调度、Kalman 同化、滚动预测和分层评分流程。它现在已归档为第五版前的模块化对照，不包含训练 checkpoint、预测 CSV、热图或完整实验输出。
 
 ## 目录结构
 
 ```text
-第四版/
+归档/第四版/
 |-- README.md
 |-- 更新说明.md
 `-- lake_pinn/
@@ -26,10 +26,10 @@
 - `python -m lake_pinn.standard_inputs`：把 ERA5、LST 和剖面观测整理为标准宽表输入。
 - `python lake_pinn/lake_profile_scorecard.py`：对预测剖面做 RMSE、MAE、bias 和物理过程评分。
 
-运行时建议先进入第四版目录：
+运行时建议先进入归档第四版目录：
 
 ```powershell
-cd E:\pycharm\PINN\github仓库\PINN-\第四版
+cd E:\pycharm\PINN\github仓库\PINN-\归档\第四版
 python -m lake_pinn --help
 ```
 

@@ -1,6 +1,6 @@
 # 实验结论摘要
 
-本文档记录当前仓库中关键版本的定位和已知结论。完整实验输出、热图、checkpoint 和大批量 CSV 不放入 GitHub。
+本文档记录当前仓库中关键版本的定位和已知结论。完整实验输出、checkpoint 和大批量 CSV 不放入 GitHub；少量代表热图和评分摘要保存在 `docs/figures/`。
 
 ## 关键版本
 
@@ -9,21 +9,23 @@
 | 第二版旧输入 PPO | `归档/第二版/PPO策略控制.py` | `策略测试/七` | Mohonk 2017 数值 RMSE 最低，但属于旧输入结构 |
 | 第三版 11 维主线 | `归档/第三版/PPO策略调控_11维主线_20260426.py` | `11维测试/九` | 已归档的 11 维单文件主线对照 |
 | 第三版热收支 A 线 | `归档/第三版/PPO策略调控_热收支A线_20260428.py` | `11维测试/十一` 到 `11维测试/十七` | 已归档的热收支实验线 |
-| 第四版模块化 LakePINN | `第四版/lake_pinn/` | `run9_resume_train_20260509`、`official_predict_*` | 当前候选模块化主线，适合继续开发 |
+| 第四版模块化 LakePINN | `归档/第四版/lake_pinn/` | `run9_resume_train_20260509`、`official_predict_*` | 已归档的模块化 PINN/PPO/Kalman 对照 |
+| 第五版 raw PINN | `第五版/lake_pinn/` | `T34_rawPINN_noRolling_noKalman_noPPO_20260511` | 当前候选主线，适合继续开发 |
 
 ## 当前参考结果
 
 | 实验 | RMSE | MAE | bias | 当前判断 |
 |---|---:|---:|---:|---|
+| `T34_rawPINN_noRolling_noKalman_noPPO_20260511` | 1.250 | 0.830 | -0.069 | 第五版当前最佳 raw PINN，scorecard v2=80.71；密度稳定性仍需优化 |
 | `策略测试/七` | 1.051 | 0.734 | 0.024 | 数值精度最好，已归档为旧输入对照 |
 | `11维测试/九` | 1.498 | 1.061 | 0.188 | 已归档 11 维稳定对照 |
-| `run9_resume_train_20260509` | 1.478 | 0.999 | 0.060 | 第四版续训候选增强，物理底线通过，但不直接替换主线 |
+| `run9_resume_train_20260509` | 1.478 | 0.999 | 0.060 | 归档第四版续训候选增强，物理底线通过 |
 | `official_predict_pinn` | 1.502 | 1.056 | 0.152 | PINN rolling 输出作为诊断，预测侧物理底线仍需谨慎 |
 | `official_predict_kalman` | 1.567 | 1.084 | 0.095 | Kalman 同化输出物理底线通过，启用 Kalman 时优先用于展示和评分 |
 | `11维测试/十六` | 1.557 | 1.106 | 0.213 | 热收支 A3 预测结果，数值接近主线 |
 | `11维测试/十七` | 1.672 | 1.172 | 0.282 | A4 预测侧仍未完全通过物理底线 |
 
-这些指标基于 Mohonk 2017 预测 CSV 与 `MohonkLake_temp_2017_filled_from_2014_2017.csv` 对齐后的结果。评价时不能只看 RMSE，还需要结合物理底线和季节过程。
+这些指标基于 Mohonk 2017 预测 CSV 与 0-13 m 观测剖面对齐后的结果。评价时不能只看 RMSE，还需要结合物理底线和季节过程。
 
 ## 分层评价原则
 
@@ -52,7 +54,21 @@
 
 下一步建议优先做预测侧单因素对照，检查 embedded PPO policy、Kalman 参数和 heat-budget loss 在预测阶段的耦合。
 
-## 第四版模块化结论
+## 第五版 raw PINN 结论
+
+第五版将当前研究重心调整为 raw PINN 主线：优先通过训练侧结构约束学习物理形态，而不是依赖 rolling、Kalman 或 PPO 预测后处理。当前源码对应本地 `T34_rawPINN_noRolling_noKalman_noPPO_20260511` 分支。
+
+主要判断：
+
+- 默认输入维度升级到 27 维，支持扩展 forcing、past-only weather memory 和 previous-state memory。
+- 预测侧默认输出 raw PINN；Kalman、rolling 和 PPO 仍保留为可选对照或诊断。
+- 训练侧新增 profile-grid physics、density regularization 和 bottom slow-change，用来把热图形态约束前移到训练阶段。
+- scorecard 升级到 v2，重点检查季节覆盖、物理失败项和候选输出排序。
+- 当前代表实验 `T34_rawPINN_noRolling_noKalman_noPPO_20260511` 的 RMSE 为 1.250，MAE 为 0.830，bias 为 -0.069，scorecard v2 为 80.71。
+- T34 的数值精度已明显好于第三版和第四版对照，但 density stability 仍未通过，是下一步优化重点。
+- T34 完整输出仍保留在本地，暂不提交 checkpoint、预测 CSV 或批量图像。
+
+## 第四版模块化归档结论
 
 第四版将 run9 后续实验整理为 `lake_pinn` 包，便于把训练、预测、Kalman 同化、PPO 调度、标准输入构建和分层评分拆开维护。当前更新只提交源码和说明，不提交 checkpoint、完整预测 CSV 或训练输出。
 
@@ -61,7 +77,7 @@
 - `run9_resume_train_20260509` 相比 `11维测试/九` 有小幅数值提升，RMSE 约为 1.478，MAE 约为 0.999，bias 约为 0.060。
 - 官方预测输出中，`pinn_rolling` 保留为 PINN 预测诊断；启用 Kalman 时，`kalman_assimilated` 作为展示和评分优先输出。
 - 第四版默认输入维度面向 17 维扩展 forcing；复用 11 维 checkpoint 或 run9 兼容训练时，需要显式设置 `--model-input-dim 11`。
-- 该版本适合作为后续工程化和多湖泊扩展的候选主线；第三版单文件主线已移入归档，作为已验证对照保留。
+- 该版本已移入 `归档/第四版/`，作为第五版前的模块化对照保留。
 
 ## checkpoint 定位
 
@@ -71,7 +87,7 @@
 11维测试/9/mohonk_lake_2017_pinn_model_checkpoint.pt
 ```
 
-该 checkpoint 为 11 维输入模型，包含嵌入的 PPO policy bundle，可直接用于 `归档/第三版/PPO策略调控_11维主线_20260426.py --mode predict`，或在第四版中配合 `--model-input-dim 11` 做兼容预测。公开复现模板见 [`REPRODUCE.md`](./REPRODUCE.md)。
+该 checkpoint 为 11 维输入模型，包含嵌入的 PPO policy bundle，可直接用于 `归档/第三版/PPO策略调控_11维主线_20260426.py --mode predict`，或在归档第四版中配合 `--model-input-dim 11` 做兼容预测。公开复现模板见 [`REPRODUCE.md`](./REPRODUCE.md)。
 
 热收支 A 线可参考：
 
@@ -86,6 +102,6 @@
 - `策略测试/`
 - `score_outputs_*`
 - checkpoint 文件
-- 预测热图和预测 CSV
+- 批量预测热图和预测 CSV
 
-GitHub 仓库只保存代码、文档和精简结论。需要公开结果时，再把代表性图表和评分摘要整理进论文或报告。
+GitHub 仓库只保存代码、文档、精简结论和少量代表性图表。需要公开更多结果时，再把评分摘要整理进论文或报告。
