@@ -10,13 +10,17 @@
 | 第三版 11 维主线 | `归档/第三版/PPO策略调控_11维主线_20260426.py` | `11维测试/九` | 已归档的 11 维单文件主线对照 |
 | 第三版热收支 A 线 | `归档/第三版/PPO策略调控_热收支A线_20260428.py` | `11维测试/十一` 到 `11维测试/十七` | 已归档的热收支实验线 |
 | 第四版模块化 LakePINN | `归档/第四版/lake_pinn/` | `run9_resume_train_20260509`、`official_predict_*` | 已归档的模块化 PINN/PPO/Kalman 对照 |
-| 第五版 raw PINN | `第五版/lake_pinn/` | `T34_rawPINN_noRolling_noKalman_noPPO_20260511` | 当前候选主线，适合继续开发 |
+| 第五版 raw PINN | `第五版/lake_pinn/` | `T34_rawPINN_noRolling_noKalman_noPPO_20260511` | Mohonk raw PINN 基线 |
+| 第六版 multi-lake / few-shot | `第六版/lake_pinn/` | `T54_Kinneret...`、`Sparkling few-shot 20d`、`LOO_03 Mendota` | 当前候选主线，适合继续开发 |
 
 ## 当前参考结果
 
 | 实验 | RMSE | MAE | bias | 当前判断 |
 |---|---:|---:|---:|---|
-| `T34_rawPINN_noRolling_noKalman_noPPO_20260511` | 1.250 | 0.830 | -0.069 | 第五版当前最佳 raw PINN，scorecard v2=80.71；密度稳定性仍需优化 |
+| `T54_Kinneret修复时间步长后T51微调` | 0.670 | 0.443 | -0.159 | 第六版 Kinneret 单湖最优，物理底线通过 |
+| `Sparkling lakeSpecificResidual softBound surfaceUniform 20d` | 1.402 | 1.078 | 0.340 | 第六版 few-shot 最优，20 个剖面日期适配且物理底线通过 |
+| `LOO_03 Mendota zero-shot` | 1.079 | - | - | 第六版 leave-one-lake 最优，训练摘要 test RMSE |
+| `T34_rawPINN_noRolling_noKalman_noPPO_20260511` | 1.250 | 0.830 | -0.069 | 第五版 Mohonk raw PINN 基线，scorecard v2=80.71；密度稳定性仍需优化 |
 | `策略测试/七` | 1.051 | 0.734 | 0.024 | 数值精度最好，已归档为旧输入对照 |
 | `11维测试/九` | 1.498 | 1.061 | 0.188 | 已归档 11 维稳定对照 |
 | `run9_resume_train_20260509` | 1.478 | 0.999 | 0.060 | 归档第四版续训候选增强，物理底线通过 |
@@ -25,7 +29,27 @@
 | `11维测试/十六` | 1.557 | 1.106 | 0.213 | 热收支 A3 预测结果，数值接近主线 |
 | `11维测试/十七` | 1.672 | 1.172 | 0.282 | A4 预测侧仍未完全通过物理底线 |
 
-这些指标基于 Mohonk 2017 预测 CSV 与 0-13 m 观测剖面对齐后的结果。评价时不能只看 RMSE，还需要结合物理底线和季节过程。
+这些指标基于对应湖泊/年份预测 CSV 与剖面观测对齐后的结果。评价时不能只看 RMSE，还需要结合物理底线和季节过程。
+
+## 第六版 multi-lake / few-shot 结论
+
+第六版将研究重点从单湖 raw PINN 推进到多湖泛化和 few-shot 迁移。当前源码对应 `第六版/lake_pinn`，完整实验输出保留在本地第六版实验目录。
+
+主要判断：
+
+- `T54_Kinneret修复时间步长后T51微调` 是本轮 Kinneret 单湖数值最优结果，profile validation RMSE 为 0.670，MAE 为 0.443，bias 为 -0.159，scorecard 物理底线通过。
+- `T57_Kinneret一月深层记忆修复` 的 RMSE 为 0.727，MAE 为 0.482，bias 为 -0.090，数值略低于 T54，但一月深层结构更稳，适合作为下一轮 warm/deep lake 物理项基础。
+- `FewShot_Sparkling_from_LOO02_lakeSpecificResidual_softBound_surfaceUniform_20d` 是 Sparkling few-shot 最优记录，held-out RMSE 为 1.402，MAE 为 1.078，bias 为 0.340，scorecard 物理底线通过。
+- `LOO_03_train_Mohonk_Sparkling_Erken2019_test_Mendota` 是当前 leave-one-lake 最好样例，最佳训练摘要 test RMSE 为 1.079。
+- Mohonk 第六版 T55/T56 复评没有超过第五版 T34；Mohonk 继续使用 T34 作为公开对照更稳。
+
+代表图像：
+
+- [Kinneret T54 年度热图](./docs/figures/lakepinn_v6_kinneret_t54_year_heatmap.png) 和 [scorecard](./docs/figures/lakepinn_v6_kinneret_t54_scorecard_report.png)
+- [Sparkling few-shot 年度热图](./docs/figures/lakepinn_v6_sparkling_fewshot_surfaceuniform_year_heatmap.png) 和 [scorecard](./docs/figures/lakepinn_v6_sparkling_fewshot_surfaceuniform_scorecard_report.png)
+- [Mendota LOO zero-shot 年度热图](./docs/figures/lakepinn_v6_mendota_loo03_zeroshot_year_heatmap.png) 和 [scorecard](./docs/figures/lakepinn_v6_mendota_loo03_zeroshot_scorecard_report.png)
+
+更完整的本轮总结见 [`第六版/实验总结.md`](./第六版/实验总结.md)。
 
 ## 分层评价原则
 

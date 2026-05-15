@@ -1,6 +1,6 @@
 # 数据说明
 
-本仓库不直接上传原始数据、验证数据和训练输出。运行第五版模块化入口或归档版本脚本前，需要在本地准备 ERA5 forcing、LST 表面温度和剖面观测数据。
+本仓库不直接上传原始数据、验证数据和训练输出。运行第六版模块化入口或归档版本脚本前，需要在本地准备 ERA5 forcing、LST 表面温度、剖面观测数据和可选湖泊静态属性。
 
 ## 数据角色
 
@@ -9,7 +9,7 @@
 | ERA5 daily forcing | 必须 | 提供气温、风速、短波辐射等外部强迫 |
 | LST surface observation | 必须 | 提供湖泊表面温度观测或表层约束 |
 | Profile observations | 训练时建议提供 | 用于 PINN observation loss、validation、Kalman assimilation 和 test 评价切分 |
-| Static lake metadata | 可选 | 最大深度、面积、纬度；代码对 Mohonk 和 Mendota 有默认值 |
+| Static lake metadata | 第六版多湖/迁移实验建议提供 | 最大深度、平均深度、面积、纬度、经度、体积、海拔、透明度、fetch 等湖泊属性 |
 | Bottom temperature / FLake fields | 可选 | 用于底温、混合层深度等结构诊断或辅助约束 |
 
 ## ERA5 / Forcing CSV
@@ -68,9 +68,25 @@ Date,Temp_0m,Temp_1m,Temp_2m,Temp_3m
 
 评分脚本 `lake_profile_scorecard.py` 同样支持这两种格式。
 
+## Static Lake Metadata
+
+第六版的 `global_adapter` 和 few-shot 迁移会使用湖泊静态属性构建 lake-attribute residual。建议在标准输入 manifest 或数据表中提供：
+
+| 字段 | 含义 |
+|---|---|
+| `lake_id` / `lake_name` | 湖泊标识和名称 |
+| `max_depth_m` / `mean_depth_m` | 最大水深和平均水深 |
+| `area_km2` / `volume_m3` | 面积和体积 |
+| `latitude` / `longitude` | 地理位置 |
+| `elevation_m` | 海拔 |
+| `secchi_m` 或 `light_extinction_kd` | 透明度或光衰减 |
+| `fetch_m` / `wind_exposure` | 风暴露和有效 fetch |
+
+缺失字段会使用默认值或从湖名/输入路径推断，但多湖泛化效果更依赖这些属性的稳定性。
+
 ## Profile Split
 
-第五版支持 `--profile-split-mode time_blocked` 和 `seasonal_blocked`。归档第三版和第四版默认使用 `time_blocked`。这些切分会把剖面观测分为：
+第五版和第六版支持 `--profile-split-mode time_blocked` 和 `seasonal_blocked`。归档第三版和第四版默认使用 `time_blocked`。这些切分会把剖面观测分为：
 
 | 子集 | 用途 |
 |---|---|

@@ -2,7 +2,7 @@
 
 湖泊温度剖面预测与物理约束 PINN / PPO 实验仓库。项目以 ERA5 气象强迫、MODIS LST 表面温度和湖泊剖面观测为输入，预测湖泊逐日水温深度剖面 `T(z,t)`，并用物理约束、Kalman 同化和 PPO 调度改进季节结构与数值精度。
 
-当前推荐继续研究的主入口是 `第五版/lake_pinn/`。第五版延续模块化 Python 包结构，但把主线调整为 raw PINN + 训练侧结构约束；rolling、Kalman 和 PPO 预测调度保留为可选对照或诊断能力。`第四版/` 和 `第三版/` 已移入 `归档/`，保留为历史对照。
+当前推荐继续研究的主入口是 `第六版/lake_pinn/`。第六版在第五版 raw PINN 基础上扩展到多湖 global adapter、湖泊属性输入、few-shot 目标湖适配和 warm/deep lake 物理约束。第五版保留为 Mohonk raw PINN 基线，`第四版/` 和 `第三版/` 已移入 `归档/`，保留为历史对照。
 
 ## 项目状态
 
@@ -10,7 +10,8 @@
 
 当前定位：
 
-- `第五版/lake_pinn/` 是当前 raw PINN 主线，支持 27 维扩展输入、profile-grid physics、density regularization 和 scorecard v2。
+- `第六版/lake_pinn/` 是当前多湖与迁移学习主线，支持 global adapter、few-shot adapter、湖泊静态属性和 warm/deep lake 物理约束。
+- `第五版/lake_pinn/` 是 Mohonk raw PINN 基线，支持 27 维扩展输入、profile-grid physics、density regularization 和 scorecard v2。
 - `归档/第四版/lake_pinn/` 是第四版模块化 LakePINN 对照，支持 PINN、PPO、Kalman、滚动预测和分层评分。
 - `归档/第三版/PPO策略调控_11维主线_20260426.py` 是已归档的 11 维 PINN + PPO/Kalman 单文件主线。
 - `归档/第三版/PPO策略调控_热收支A线_20260428.py` 是已归档的热收支 A 线实验方向。
@@ -29,11 +30,14 @@ README 中只保留关键指标、代表性热图和版本更新说明；需要�
 
 ## 结果快照
 
-以下结果基于 Mohonk 2017 预测 CSV 与 0-13 m 观测剖面对齐后的评分。模型选择不能只看 RMSE，还需要结合冬季逆温、夏季分层、秋季翻混、漂移和温跃层结构。
+以下结果基于各实验对应湖泊/年份的预测 CSV 与剖面观测对齐后的评分。模型选择不能只看 RMSE，还需要结合冬季逆温、夏季分层、秋季翻混、漂移和温跃层结构。
 
 | 实验 | RMSE | MAE | bias | 当前判断 |
 |---|---:|---:|---:|---|
-| `T34_rawPINN_noRolling_noKalman_noPPO_20260511` | 1.250 | 0.830 | -0.069 | 第五版当前最佳 raw PINN；scorecard v2=80.71，密度稳定性仍需优化 |
+| `T54_Kinneret修复时间步长后T51微调` | 0.670 | 0.443 | -0.159 | 第六版 Kinneret 单湖最优，物理底线通过 |
+| `Sparkling lakeSpecificResidual softBound surfaceUniform 20d` | 1.402 | 1.078 | 0.340 | 第六版 few-shot 最优，20 个剖面日期适配且物理底线通过 |
+| `LOO_03 Mendota zero-shot` | 1.079 | - | - | 第六版 leave-one-lake 最优，训练摘要 test RMSE |
+| `T34_rawPINN_noRolling_noKalman_noPPO_20260511` | 1.250 | 0.830 | -0.069 | 第五版 Mohonk raw PINN 基线；scorecard v2=80.71，密度稳定性仍需优化 |
 | `策略测试/七` | 1.051 | 0.734 | 0.024 | 数值精度最好，旧输入结构对照 |
 | `11维测试/九` | 1.498 | 1.061 | 0.188 | 已归档 11 维稳定对照 |
 | `run9_resume_train_20260509` | 1.478 | 0.999 | 0.060 | 归档第四版续训候选增强 |
@@ -45,7 +49,19 @@ README 中只保留关键指标、代表性热图和版本更新说明；需要�
 
 ## 代表图像
 
-第五版当前主线 `T34_rawPINN_noRolling_noKalman_noPPO_20260511` 的 Mohonk 2017 raw PINN 年度温度剖面热图：
+第六版 Kinneret T54 单湖最优年度热图：
+
+![Kinneret 2006 v6 T54 year heatmap](./docs/figures/lakepinn_v6_kinneret_t54_year_heatmap.png)
+
+第六版 Sparkling 20d few-shot 最优年度热图：
+
+![Sparkling 2002 v6 few-shot year heatmap](./docs/figures/lakepinn_v6_sparkling_fewshot_surfaceuniform_year_heatmap.png)
+
+第六版 Mendota leave-one-lake zero-shot 年度热图：
+
+![Mendota 2018 v6 LOO zero-shot year heatmap](./docs/figures/lakepinn_v6_mendota_loo03_zeroshot_year_heatmap.png)
+
+第五版 Mohonk raw PINN 基线 `T34_rawPINN_noRolling_noKalman_noPPO_20260511` 的 Mohonk 2017 年度温度剖面热图：
 
 ![Mohonk 2017 v5 T34 raw PINN year heatmap](./docs/figures/mohonk_2017_v5_t34_raw_pinn_year_heatmap.png)
 
@@ -77,9 +93,12 @@ Mohonk 2017 关键版本误差对比：
 
 ## 快速入口
 
-- 第五版当前主入口：[`第五版/lake_pinn`](./第五版/lake_pinn)
+- 第六版当前主入口：[`第六版/lake_pinn`](./第六版/lake_pinn)
+- 第六版更新说明：[`第六版/更新说明.md`](./第六版/更新说明.md)
+- 第六版实验总结：[`第六版/实验总结.md`](./第六版/实验总结.md)
+- 第五版 Mohonk raw PINN 基线：[`第五版/lake_pinn`](./第五版/lake_pinn)
 - 第五版更新说明：[`第五版/更新说明.md`](./第五版/更新说明.md)
-- 第五版评分工具：[`第五版/lake_pinn/lake_profile_scorecard.py`](./第五版/lake_pinn/lake_profile_scorecard.py)
+- 当前评分工具：[`第六版/lake_pinn/lake_profile_scorecard.py`](./第六版/lake_pinn/lake_profile_scorecard.py)
 - 已归档第四版：[`归档/第四版/lake_pinn`](./归档/第四版/lake_pinn)
 - 已归档 11 维单文件主线：[`归档/第三版/PPO策略调控_11维主线_20260426.py`](./归档/第三版/PPO策略调控_11维主线_20260426.py)
 - 已归档热收支实验线：[`归档/第三版/PPO策略调控_热收支A线_20260428.py`](./归档/第三版/PPO策略调控_热收支A线_20260428.py)
@@ -92,20 +111,22 @@ Mohonk 2017 关键版本误差对比：
 
 | 版本 | 位置 | 主要更新 | 当前状态 |
 |---|---|---|---|
-| 第五版 | [`第五版/lake_pinn`](./第五版/lake_pinn) | 当前 raw PINN 主线。默认输入维度升级为 27 维，引入 past-only weather memory、previous-state memory、profile-grid physics、density regularization、bottom slow-change 和 scorecard v2。预测侧默认使用 raw PINN，rolling、Kalman 和 PPO 保留为可选对照或诊断。 | 当前推荐继续开发 |
+| 第六版 | [`第六版/lake_pinn`](./第六版/lake_pinn) | 当前多湖与迁移学习主线。新增 global adapter、lake-attribute residual、few-shot adapter、warm/deep lake 物理门控、Richardson 数扩散和跨湖实验总结。 | 当前推荐继续开发 |
+| 第五版 | [`第五版/lake_pinn`](./第五版/lake_pinn) | raw PINN 单湖主线。默认输入维度升级为 27 维，引入 past-only weather memory、previous-state memory、profile-grid physics、density regularization、bottom slow-change 和 scorecard v2。预测侧默认使用 raw PINN，rolling、Kalman 和 PPO 保留为可选对照或诊断。 | 保留为 Mohonk raw PINN 基线 |
 | 第四版 | [`归档/第四版/lake_pinn`](./归档/第四版/lake_pinn) | 将 run9 后续主线从单文件整理为模块化 Python 包，拆分训练、预测、Kalman、PPO、标准输入构建和评分工具。新增官方预测输出选择逻辑，启用 Kalman 时以同化输出作为展示/评分优先结果。 | 已归档为第五版前的模块化对照 |
 | 第三版 | [`归档/第三版`](./归档/第三版) | 形成 11 维 PINN + PPO/Kalman 单文件主线，并加入热收支 A 线实验和剖面分层评分工具。`11维测试/九` 是该阶段稳定对照，热收支 A3/A4 说明能量约束有潜力但预测侧仍需改进。 | 已归档为稳定单文件对照 |
 | 第二版 | [`归档/第二版`](./归档/第二版) | 旧输入结构 PPO 版本，对应 `策略测试/七`。在 Mohonk 2017 上取得过最低 RMSE，但输入结构和后续主线不一致。 | 已归档为历史数值基线 |
 | 第一版 | [`归档/第一版`](./归档/第一版) | 早期将数据下载、处理、可视化和预测建模分目录整理，形成从数据爬取到结果验证的初始流程。 | 已归档为早期流程参考 |
 | 第零版 | [`归档/第零版`](./归档/第零版) | 项目最早期的集中式脚本和数据处理尝试，保留原始实现思路和早期物理参数/下载流程。 | 已归档为历史留档 |
 
-简要路线是：第零版和第一版搭建数据与早期预测流程，第二版取得历史最低 RMSE 对照，第三版转向 11 维物理主线，第四版完成模块化整理，第五版把研究重点推进到 raw PINN 和训练侧结构约束。
+简要路线是：第零版和第一版搭建数据与早期预测流程，第二版取得历史最低 RMSE 对照，第三版转向 11 维物理主线，第四版完成模块化整理，第五版把研究重点推进到 raw PINN 和训练侧结构约束，第六版扩展到多湖泛化和 few-shot 迁移。
 
 ## 各版本最佳实验记录
 
 | 版本 | 最佳/代表实验 | RMSE | MAE | bias | 热图/报告 | 说明 |
 |---|---|---:|---:|---:|---|---|
-| 第五版 | `T34_rawPINN_noRolling_noKalman_noPPO_20260511` | 1.250 | 0.830 | -0.069 | [年度热图](./docs/figures/mohonk_2017_v5_t34_raw_pinn_year_heatmap.png)、[scorecard](./docs/figures/mohonk_2017_v5_t34_scorecard_report.png) | 当前 raw PINN 主线，scorecard v2 为 80.71；数值明显改善，但 density stability 仍未通过 |
+| 第六版 | `T54_Kinneret修复时间步长后T51微调` | 0.670 | 0.443 | -0.159 | [年度热图](./docs/figures/lakepinn_v6_kinneret_t54_year_heatmap.png)、[scorecard](./docs/figures/lakepinn_v6_kinneret_t54_scorecard_report.png) | Kinneret 单湖最优；Sparkling few-shot 最优为 RMSE 1.402，Mendota LOO zero-shot test RMSE 为 1.079 |
+| 第五版 | `T34_rawPINN_noRolling_noKalman_noPPO_20260511` | 1.250 | 0.830 | -0.069 | [年度热图](./docs/figures/mohonk_2017_v5_t34_raw_pinn_year_heatmap.png)、[scorecard](./docs/figures/mohonk_2017_v5_t34_scorecard_report.png) | Mohonk raw PINN 基线，scorecard v2 为 80.71；数值明显改善，但 density stability 仍未通过 |
 | 第四版 | `run9_resume_train_20260509` | 1.478 | 0.999 | 0.060 | [Kalman 年度热图](./docs/figures/mohonk_2017_v4_official_kalman_year_heatmap.png) | 续训候选是该阶段 RMSE 最优；官方 Kalman 展示对照为 RMSE 1.567 / MAE 1.084 / bias 0.095 |
 | 第三版 | `11维测试/九` | 1.498 | 1.061 | 0.188 | [年度热图](./docs/figures/mohonk_2017_11d9_year_heatmap.png)、[RMSE 月深度热图](./docs/figures/mohonk_2017_11d9_rmse_heatmap_month_depth.png)、[bias 月深度热图](./docs/figures/mohonk_2017_11d9_bias_heatmap_month_depth.png) | 11 维 PINN + PPO/Kalman 单文件主线的稳定归档对照 |
 | 第二版 | `策略测试/七` | 1.051 | 0.734 | 0.024 | [年度热图](./docs/figures/mohonk_2017_v2_run7_year_heatmap.png) | 历史最低 RMSE，对旧输入结构很有参考价值，但不直接替代当前主线 |
@@ -120,7 +141,7 @@ Mohonk 2017 关键版本误差对比：
 pip install -r requirements.txt
 ```
 
-根目录 `requirements.txt` 覆盖当前第五版主线代码。归档目录中的早期下载脚本可能还需要额外依赖，例如 `cdsapi`、`xarray` 或 `seaborn`。
+根目录 `requirements.txt` 覆盖当前第六版主线代码。归档目录中的早期下载脚本可能还需要额外依赖，例如 `cdsapi`、`xarray` 或 `seaborn`。
 
 ## 数据与复现
 
@@ -138,7 +159,7 @@ pip install -r requirements.txt
 训练主线模型：
 
 ```powershell
-Push-Location ".\第五版"
+Push-Location ".\第六版"
 python -m lake_pinn `
   --mode train `
   --era5 "..\path\to\ERA5_daily.csv" `
@@ -153,7 +174,7 @@ Pop-Location
 使用已训练 checkpoint 预测：
 
 ```powershell
-Push-Location ".\第五版"
+Push-Location ".\第六版"
 python -m lake_pinn `
   --mode predict `
   --era5 "..\path\to\ERA5_daily.csv" `
@@ -166,7 +187,7 @@ Pop-Location
 评分预测结果：
 
 ```powershell
-python ".\第五版\lake_pinn\lake_profile_scorecard.py" `
+python ".\第六版\lake_pinn\lake_profile_scorecard.py" `
   --truth "path\to\profile_truth.csv" `
   --pred "outputs\predict_main\mohonk_lake_2017_pinn_temperature_depth_predictions.csv" `
   --label "main_predict" `
@@ -177,7 +198,8 @@ python ".\第五版\lake_pinn\lake_profile_scorecard.py" `
 
 | 目录/脚本 | 定位 | 对应实验 | 当前判断 |
 |---|---|---|---|
-| `第五版/lake_pinn/` | raw PINN + 训练侧结构约束主线 | `T34_rawPINN_noRolling_noKalman_noPPO_20260511` | 当前推荐继续开发 |
+| `第六版/lake_pinn/` | 多湖 global adapter + few-shot 迁移主线 | `T54_Kinneret...`、`Sparkling few-shot 20d`、`LOO_03 Mendota` | 当前推荐继续开发 |
+| `第五版/lake_pinn/` | raw PINN + 训练侧结构约束单湖基线 | `T34_rawPINN_noRolling_noKalman_noPPO_20260511` | 保留为 Mohonk raw PINN 基线 |
 | `归档/第四版/lake_pinn/` | 模块化 PINN + PPO/Kalman 候选主线 | `run9_resume_train_20260509`、`official_predict_*` | 已归档为模块化对照 |
 | `归档/第三版/PPO策略调控_11维主线_20260426.py` | 11 维 PINN + PPO/Kalman 单文件主线 | `11维测试/九` | 已归档为稳定对照 |
 | `归档/第三版/PPO策略调控_热收支A线_20260428.py` | 能量版热收支实验线 | `11维测试/十一` 到 `11维测试/十七` | 已归档，有参考价值 |
@@ -194,6 +216,12 @@ PINN-
 |-- EXPERIMENTS.md
 |-- REPRODUCE.md
 |-- requirements.txt
+|-- 第六版/
+|   |-- README.md
+|   |-- 更新说明.md
+|   |-- 实验总结.md
+|   |-- lake_pinn/
+|   `-- tests/
 |-- 第五版/
 |   |-- README.md
 |   |-- 更新说明.md
@@ -212,7 +240,7 @@ PINN-
 
 - 原始数据和验证数据。
 - 训练 checkpoint，例如 `*.pt`、`*.pth`、`*.ckpt`。
-- 预测输出 CSV 和热图 PNG。
+- 预测输出 CSV 和完整/批量热图 PNG。
 - `11维测试/`、`策略测试/`、`score_outputs*/` 等大批量实验结果目录。
 
 这些内容更适合在论文、报告或发布版本中整理为摘要表、评分表和代表性图像。
