@@ -1,13 +1,13 @@
-# 第五版：Raw PINN 主线
+# 第五版：Raw PINN 归档基线
 
-第五版是在第四版模块化代码基础上的下一阶段主线。它继续使用 `lake_pinn` 包结构，但把预测侧重点调整为 raw PINN：默认不再依赖 rolling 后处理、Kalman 同化或 PPO 预测调度，相关能力保留为可选诊断和对照。
+第五版是在第四版模块化代码基础上的 raw PINN 主线版本，现在已归档为 Mohonk 单湖基线。它继续使用 `lake_pinn` 包结构，但把预测侧重点调整为 raw PINN：默认不再依赖 rolling 后处理、Kalman 同化或 PPO 预测调度，相关能力保留为可选诊断和对照。
 
 本目录只保存源码和说明，不包含 checkpoint、预测 CSV 或完整实验输出；代表热图和 scorecard 摘要整理在根目录 `docs/figures/`。
 
 ## 目录结构
 
 ```text
-第五版/
+归档/第五版/
 |-- README.md
 |-- 更新说明.md
 `-- lake_pinn/
@@ -39,7 +39,7 @@
 ## 运行入口
 
 ```powershell
-cd E:\pycharm\PINN\github仓库\PINN-\第五版
+cd E:\pycharm\PINN\github仓库\PINN-\归档\第五版
 python -m lake_pinn --help
 ```
 

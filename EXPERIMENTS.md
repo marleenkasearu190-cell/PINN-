@@ -10,7 +10,7 @@
 | 第三版 11 维主线 | `归档/第三版/PPO策略调控_11维主线_20260426.py` | `11维测试/九` | 已归档的 11 维单文件主线对照 |
 | 第三版热收支 A 线 | `归档/第三版/PPO策略调控_热收支A线_20260428.py` | `11维测试/十一` 到 `11维测试/十七` | 已归档的热收支实验线 |
 | 第四版模块化 LakePINN | `归档/第四版/lake_pinn/` | `run9_resume_train_20260509`、`official_predict_*` | 已归档的模块化 PINN/PPO/Kalman 对照 |
-| 第五版 raw PINN | `第五版/lake_pinn/` | `T34_rawPINN_noRolling_noKalman_noPPO_20260511` | Mohonk raw PINN 基线 |
+| 第五版 raw PINN | `归档/第五版/lake_pinn/` | `T34_rawPINN_noRolling_noKalman_noPPO_20260511` | 已归档的 Mohonk raw PINN 基线 |
 | 第六版 multi-lake / few-shot | `第六版/lake_pinn/` | `T54_Kinneret...`、`Sparkling few-shot 20d`、`LOO_03 Mendota` | 当前候选主线，适合继续开发 |
 
 ## 当前参考结果
@@ -80,7 +80,7 @@
 
 ## 第五版 raw PINN 结论
 
-第五版将当前研究重心调整为 raw PINN 主线：优先通过训练侧结构约束学习物理形态，而不是依赖 rolling、Kalman 或 PPO 预测后处理。当前源码对应本地 `T34_rawPINN_noRolling_noKalman_noPPO_20260511` 分支。
+第五版曾将研究重心调整为 raw PINN 主线：优先通过训练侧结构约束学习物理形态，而不是依赖 rolling、Kalman 或 PPO 预测后处理。当前源码已移入 `归档/第五版/lake_pinn/`，对应本地 `T34_rawPINN_noRolling_noKalman_noPPO_20260511` 分支。
 
 主要判断：
 

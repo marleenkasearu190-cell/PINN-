@@ -86,7 +86,7 @@ Date,Temp_0m,Temp_1m,Temp_2m,Temp_3m
 
 ## Profile Split
 
-第五版和第六版支持 `--profile-split-mode time_blocked` 和 `seasonal_blocked`。归档第三版和第四版默认使用 `time_blocked`。这些切分会把剖面观测分为：
+归档第五版和当前第六版支持 `--profile-split-mode time_blocked` 和 `seasonal_blocked`。归档第三版和第四版默认使用 `time_blocked`。这些切分会把剖面观测分为：
 
 | 子集 | 用途 |
 |---|---|

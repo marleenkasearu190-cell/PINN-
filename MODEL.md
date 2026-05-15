@@ -104,7 +104,7 @@ PINN 学 T(z,t)，PPO 学怎样调度物理约束和同化参数。
 
 `第六版/lake_pinn/` 是当前推荐继续研究的模块化版本。它承接第五版 raw PINN 包结构，新增多湖 global adapter、few-shot 适配和 warm/deep lake 物理约束。
 
-`第五版/lake_pinn/` 是 Mohonk raw PINN 基线。它承接第四版包结构，把 raw PINN 作为默认预测输出，并将更多物理形态约束前移到训练阶段。
+`归档/第五版/lake_pinn/` 是已归档的 Mohonk raw PINN 基线。它承接第四版包结构，把 raw PINN 作为默认预测输出，并将更多物理形态约束前移到训练阶段。
 
 `归档/第四版/lake_pinn/` 是第四版模块化对照。它承接 run9 后续实验，把训练、预测、Kalman 同化、PPO 调度和评分工具拆开维护。
 

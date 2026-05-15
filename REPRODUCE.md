@@ -62,10 +62,10 @@ The score script writes `scorecard_summary.csv`, `scorecard_scores.csv`, `scorec
 When reporting results, keep three things separate:
 
 - The current research mainline: `第六版/lake_pinn/`.
-- The fifth-edition Mohonk raw PINN baseline: `第五版/lake_pinn/`.
+- The archived fifth-edition Mohonk raw PINN baseline: `归档/第五版/lake_pinn/`.
 - The archived fourth-edition modular reference: `归档/第四版/lake_pinn/`.
 - The archived third-edition single-file reference: `归档/第三版/PPO策略调控_11维主线_20260426.py`.
 - Historical numeric baselines: archived second-edition runs such as `策略测试/七`.
 - Experimental physics variants: heat-budget A-line runs such as `11维测试/十六` and `11维测试/十七`.
 
-The project position is summarized in [`EXPERIMENTS.md`](./EXPERIMENTS.md): the historical second-edition route has the lowest Mohonk 2017 RMSE, the third- and fourth-edition routes remain archived references, the fifth-edition raw PINN package is the Mohonk baseline, and the sixth-edition package is the recommended line for continued multi-lake and few-shot research.
+The project position is summarized in [`EXPERIMENTS.md`](./EXPERIMENTS.md): the historical second-edition route has the lowest Mohonk 2017 RMSE, the third-, fourth-, and fifth-edition routes remain archived references, the fifth-edition raw PINN package is the Mohonk baseline, and the sixth-edition package is the recommended line for continued multi-lake and few-shot research.
