@@ -1,6 +1,6 @@
 # 数据说明
 
-本仓库不直接上传原始数据、验证数据和训练输出。运行第六版模块化入口或归档版本脚本前，需要在本地准备 ERA5 forcing、LST 表面温度、剖面观测数据和可选湖泊静态属性。
+本仓库不直接上传原始数据、验证数据和训练输出。运行第七版 reconstruction-state 入口或归档版本脚本前，需要在本地准备 ERA5 forcing、LST 表面温度、剖面观测数据、湖泊静态属性和 manifest。
 
 ## 数据角色
 
@@ -9,7 +9,8 @@
 | ERA5 daily forcing | 必须 | 提供气温、风速、短波辐射等外部强迫 |
 | LST surface observation | 必须 | 提供湖泊表面温度观测或表层约束 |
 | Profile observations | 训练时建议提供 | 用于 PINN observation loss、validation、Kalman assimilation 和 test 评价切分 |
-| Static lake metadata | 第六版多湖/迁移实验建议提供 | 最大深度、平均深度、面积、纬度、经度、体积、海拔、透明度、fetch 等湖泊属性 |
+| Static lake metadata | 第七版多湖/state reconstruction 建议提供 | 最大深度、平均深度、面积、纬度、经度、体积、海拔、透明度、fetch 等湖泊属性 |
+| Manifest JSON | 第七版必须 | 定义 lake-year 输入、heldout lake、split mode、rollout 设置和训练/导出配置 |
 | Bottom temperature / FLake fields | 可选 | 用于底温、混合层深度等结构诊断或辅助约束 |
 
 ## ERA5 / Forcing CSV
@@ -68,9 +69,27 @@ Date,Temp_0m,Temp_1m,Temp_2m,Temp_3m
 
 评分脚本 `lake_profile_scorecard.py` 同样支持这两种格式。
 
+## Manifest JSON
+
+第七版通过 `--manifest` 读取多湖或单湖实验配置。manifest 建议包含：
+
+| 字段 | 含义 |
+|---|---|
+| `experiment` | 实验名称 |
+| `task_mode` | 通常为 `analysis`、`reconstruction` 或 `hindcast` |
+| `split_mode` | 剖面切分方式，例如 `time_blocked` |
+| `depth_points` | 状态剖面深度网格数量 |
+| `history_window_days` | forcing history 窗口 |
+| `max_rollout_days` | 默认滚动预测天数 |
+| `test_lake_id` / `test_lake_ids` | heldout lake-year |
+| `heldout_lake_groups` | 需要整组排除的湖泊组 |
+| `lakes[]` | 每个 lake-year 的 `era5`、`lst`、`profile_obs`、`metadata` 和 `max_depth` |
+
+本地 manifest 可以保留绝对路径；公开仓库只保留模板或说明，不提交完整数据 manifest。
+
 ## Static Lake Metadata
 
-第六版的 `global_adapter` 和 few-shot 迁移会使用湖泊静态属性构建 lake-attribute residual。建议在标准输入 manifest 或数据表中提供：
+第七版 state forecaster、归档第六版 `global_adapter` 和 few-shot 迁移都会使用湖泊静态属性构建 lake representation。建议在标准输入 manifest 或数据表中提供：
 
 | 字段 | 含义 |
 |---|---|
@@ -86,7 +105,7 @@ Date,Temp_0m,Temp_1m,Temp_2m,Temp_3m
 
 ## Profile Split
 
-归档第五版和当前第六版支持 `--profile-split-mode time_blocked` 和 `seasonal_blocked`。归档第三版和第四版默认使用 `time_blocked`。这些切分会把剖面观测分为：
+第七版通过 manifest / CLI 支持 `time_blocked`、`seasonal_blocked` 和 `depth_interleaved`。归档第五版和第六版支持 `--profile-split-mode time_blocked` 和 `seasonal_blocked`。归档第三版和第四版默认使用 `time_blocked`。这些切分会把剖面观测分为：
 
 | 子集 | 用途 |
 |---|---|

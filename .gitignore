@@ -1,5 +1,6 @@
 # Python cache
 __pycache__/
+.pytest_cache/
 *.py[cod]
 *.pyo
 *.pyd
@@ -7,6 +8,7 @@ __pycache__/
 # Local data and experiment outputs
 REPRODUCE_LOCAL.md
 数据/
+experiments/
 11维测试/
 策略测试/
 score_outputs*/
@@ -17,6 +19,9 @@ PINN_repro_score_outputs*/
 *.pt
 *.pth
 *.ckpt
+*.zip
+*.log
+pid.txt
 *_temperature_depth_predictions.csv
 *_july_temperature_depth_predictions.csv
 *_kalman_diagnostics.csv

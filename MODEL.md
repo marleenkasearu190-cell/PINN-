@@ -1,30 +1,24 @@
 # 模型说明
 
-第六版路线延续第五版 raw PINN + 训练侧结构约束，并把研究重心扩展到多湖 global adapter 和 few-shot 目标湖迁移：神经网络输出湖泊温度剖面 `T(z,t)`，物理损失负责约束热扩散、表面能量平衡、密度稳定、整剖面形态和边界条件。Kalman、rolling 和 PPO 仍可用于对照或诊断，但不再是默认预测主线。
+第七版路线将主线切换为 reconstruction-state / state-space forecaster：模型不再只学习独立的 `T(z,t)` 函数，而是从当前温度剖面状态、forcing 历史和湖泊静态属性推进下一步剖面。物理约束重点转为热含量转移、垂向扩散、bulk turbulent flux、密度稳定、free-roll 漂移和 segment rollout 稳定性。
 
 ## 输入与输出
 
-第五版默认面向 27 维扩展输入，覆盖 forcing、past-only weather memory 和 previous-state memory。第六版在此基础上继续加入湖泊静态属性和可选 global adapter residual。复用归档第三版 run9/11 维 checkpoint 或做兼容训练时，需要显式设置 `--model-input-dim 11`。下表是 11 维兼容输入的核心字段。
+第七版默认通过 manifest 读取 lake-year 输入。每个 lake-year 至少需要 ERA5 forcing、LST、profile observations 和 metadata；模型内部会构建 forcing history、静态湖泊属性、深度网格、hypsometry 和当前剖面状态。归档第五版/第六版的直接 PINN 输入维度不再是第七版主接口。
 
 | 输入 | 含义 |
 |---|---|
-| `t_norm` | 归一化时间 |
-| `z_norm` | 归一化深度 |
-| `doy_sin` | 年周期正弦项 |
-| `doy_cos` | 年周期余弦项 |
-| `LST_surface` | 湖泊表面温度观测或表层目标 |
-| `T_air` | 近地面气温 |
-| `wind_speed` | 风速 |
-| `shortwave` | 短波辐射 |
-| `max_depth_norm` | 归一化最大水深 |
-| `log_area` | 湖泊面积的对数特征 |
-| `latitude` | 纬度特征 |
+| Manifest | lake-year 列表、heldout lake 设置、路径和训练参数 |
+| ERA5 / forcing | 气温、风、短波、长波或可派生 flux 项 |
+| LST | 表层观测、初始化和可选表层同化 |
+| Profile observations | transition loss、state initialization、validation 和 scorecard |
+| Metadata / hypsometry | 最大水深、面积、纬度、体积、透明度等静态属性 |
 
 输出为：
 
 | 输出 | 含义 |
 |---|---|
-| `T(z,t)` | 指定时间和深度处的水温，单位摄氏度 |
+| `T_next(z)` | 从当前剖面状态推进得到的下一步水温剖面，单位摄氏度 |
 
 ## PINN 主体
 
@@ -36,13 +30,21 @@ T = f(t_norm, z_norm, forcing, lake_metadata)
 
 预测年度热图时，脚本会在每日时间网格和深度网格上调用模型，得到完整温度剖面序列。
 
-第六版新增 `GlobalAdaptiveLakePINN`：
+第六版归档版本新增 `GlobalAdaptiveLakePINN`：
 
 ```text
 T = global_backbone(t, z, forcing, lake_metadata) + lake_adapter(lake_metadata, shared_state)
 ```
 
 其中 global backbone 学跨湖共享结构，lake adapter / residual 学湖泊属性驱动的差异。few-shot 模块可以冻结 global checkpoint，只用少量目标湖剖面日期训练 residual adapter。
+
+第七版新增 `LakeStateForecaster`：
+
+```text
+T(t + dt, z) = M(T(t, z), forcing[t:t+dt], lake_metadata, hypsometry)
+```
+
+其中 state model 负责预测剖面增量和物理尺度，vertical solver 负责垂向扩散和面积加权热源，reconstruction 模块负责初始化、spinup、LST 同化和 free-roll 导出。
 
 ## 物理约束
 
@@ -58,6 +60,10 @@ LakePINN 脚本中的主要物理项包括：
 | Smoothness / structure terms | 抑制不合理振荡，辅助维持季节结构 |
 | Density / Richardson diffusivity | 根据密度梯度和 Richardson 数调节垂向扩散，稳定分层降低混合，密度倒置增强混合 |
 | Warm/deep lake constraints | 针对 Kinneret 等暖深湖约束冬季弱梯度、Jan deep memory 和深层慢变化 |
+| Heat-content transition | 约束相邻剖面之间的整柱热含量变化 |
+| Bulk turbulent flux | 用 bulk formula 或已提供 flux 驱动表面热通量 |
+| Segment rollout / free-roll | 用多日滚动误差约束状态推进稳定性 |
+| Latent reservoir freezing | 用 latent heat reservoir 处理冰点附近能量滞留 |
 
 热收支 A 线进一步实验了能量版整柱热收支：
 
@@ -102,7 +108,9 @@ PINN 学 T(z,t)，PPO 学怎样调度物理约束和同化参数。
 
 ## 当前主线判断
 
-`第六版/lake_pinn/` 是当前推荐继续研究的模块化版本。它承接第五版 raw PINN 包结构，新增多湖 global adapter、few-shot 适配和 warm/deep lake 物理约束。
+`第七版/lake_pinn/` 是当前推荐继续研究的模块化版本。它承接第六版多湖输入和评分资产，但将核心模型切换为 reconstruction-state forecaster，重点优化长时段 free-roll 稳定性。
+
+`归档/第六版/lake_pinn/` 是 multi-lake / few-shot 归档基线。它承接第五版 raw PINN 包结构，新增多湖 global adapter、few-shot 适配和 warm/deep lake 物理约束。
 
 `归档/第五版/lake_pinn/` 是已归档的 Mohonk raw PINN 基线。它承接第四版包结构，把 raw PINN 作为默认预测输出，并将更多物理形态约束前移到训练阶段。
 

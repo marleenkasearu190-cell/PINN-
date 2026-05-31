@@ -12,10 +12,11 @@ Prepare the following files:
 |---|---|---|
 | ERA5 forcing CSV | `data/ERA5_daily.csv` | Daily meteorological forcing |
 | MODIS LST CSV | `data/LST_2017.csv` | Lake surface temperature observation |
-| PINN checkpoint | `checkpoints/mohonk_lake_2017_pinn_model_checkpoint.pt` | Trained model for predict mode |
+| Manifest JSON | `manifests/mendota_reconstruction.json` | Lake-year inputs and heldout settings for seventh-edition runs |
+| State-forecaster checkpoint | `checkpoints/global_state_forecaster_checkpoint.pt` | Optional trained model for export-only mode |
 | Profile truth CSV | `data/profile_truth.csv` | Optional truth file for scoring |
 
-The expected data formats are described in [`DATA.md`](./DATA.md). The current recommended model line is the sixth-edition multi-lake / few-shot pipeline described in [`MODEL.md`](./MODEL.md).
+The expected data formats are described in [`DATA.md`](./DATA.md). The current recommended model line is the seventh-edition reconstruction-state pipeline described in [`MODEL.md`](./MODEL.md).
 
 ## Environment
 
@@ -25,32 +26,32 @@ Use Python 3.10 or newer.
 pip install -r requirements.txt
 ```
 
-## Predict
+## Train Or Export
 
 ```powershell
-Push-Location ".\第六版"
+Push-Location ".\第七版"
 python -m lake_pinn `
-  --mode predict `
-  --era5 "..\data\ERA5_daily.csv" `
-  --lst "..\data\LST_2017.csv" `
-  --model-checkpoint-path "..\checkpoints\mohonk_lake_2017_pinn_model_checkpoint.pt" `
-  --output-dir "..\outputs\predict_main" `
+  --manifest "..\manifests\mendota_reconstruction.json" `
+  --output-dir "..\outputs\v7_train" `
+  --epochs 200 `
   --device cpu
 Pop-Location
 ```
 
 Expected outputs:
 
-- `mohonk_lake_2017_pinn_temperature_depth_predictions.csv`
-- `mohonk_lake_2017_year_heatmap.png`
-- `mohonk_lake_2017_prediction_outputs_manifest.csv`
+- `global_state_forecaster_training_history.csv`
+- `global_state_forecaster_checkpoint.pt`
+- heldout `*_temperature_depth_predictions.csv`
+- heldout `*_year_heatmap.png`
+- heldout scorecard and diagnostic figures
 
 ## Score
 
 ```powershell
-python ".\第六版\lake_pinn\lake_profile_scorecard.py" `
+python ".\第七版\lake_pinn\lake_profile_scorecard.py" `
   --truth ".\data\profile_truth.csv" `
-  --pred ".\outputs\predict_main\mohonk_lake_2017_pinn_temperature_depth_predictions.csv" `
+  --pred ".\outputs\v7_train\heldout_temperature_depth_predictions.csv" `
   --label "main_predict" `
   --out-dir ".\outputs\score_main"
 ```
@@ -61,11 +62,12 @@ The score script writes `scorecard_summary.csv`, `scorecard_scores.csv`, `scorec
 
 When reporting results, keep three things separate:
 
-- The current research mainline: `第六版/lake_pinn/`.
+- The current research mainline: `第七版/lake_pinn/`.
+- The archived sixth-edition multi-lake / few-shot baseline: `归档/第六版/lake_pinn/`.
 - The archived fifth-edition Mohonk raw PINN baseline: `归档/第五版/lake_pinn/`.
 - The archived fourth-edition modular reference: `归档/第四版/lake_pinn/`.
 - The archived third-edition single-file reference: `归档/第三版/PPO策略调控_11维主线_20260426.py`.
 - Historical numeric baselines: archived second-edition runs such as `策略测试/七`.
 - Experimental physics variants: heat-budget A-line runs such as `11维测试/十六` and `11维测试/十七`.
 
-The project position is summarized in [`EXPERIMENTS.md`](./EXPERIMENTS.md): the historical second-edition route has the lowest Mohonk 2017 RMSE, the third-, fourth-, and fifth-edition routes remain archived references, the fifth-edition raw PINN package is the Mohonk baseline, and the sixth-edition package is the recommended line for continued multi-lake and few-shot research.
+The project position is summarized in [`EXPERIMENTS.md`](./EXPERIMENTS.md): the historical second-edition route has the lowest Mohonk 2017 RMSE, the third-, fourth-, fifth-, and sixth-edition routes remain archived references, and the seventh-edition package is the recommended line for continued reconstruction-state and long free-roll research.
