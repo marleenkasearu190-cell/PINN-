@@ -62,14 +62,14 @@ def compute_losses(model, t, z, I_s, t_obs, z_obs, T_obs, z_bottom):
 # ----------------- 3. 训练函数 -----------------
 def train():
     # 读取 ERA5 驱动
-    df = pd.read_csv(r'E:\pycharm\ERA5_extracted_temp\ERA5_Alakol_Daily_2025_01.csv')
+    df = pd.read_csv(r'data\ERA5_Alakol_Daily_2025_01.csv')
     df.columns = df.columns.str.strip()  # 去掉前后空格
     N_days = len(df)
     t_val = torch.tensor(np.arange(N_days).reshape(-1,1), dtype=torch.float32)
     Is_val = torch.tensor(df['Is_J_per_m2'].values.reshape(-1,1), dtype=torch.float32)
 
     # 读取真实观测 LST CSV
-    lst_path = r'E:\pycharm\ERA5_extracted_temp\Alakol_LST_2025_01.csv'  # 直接指定文件
+    lst_path = r'data\Alakol_LST_2025_01.csv'  # local observation file
     df_obs = pd.read_csv(lst_path)
     df_obs.columns = df_obs.columns.str.strip()
     valid_obs = df_obs.dropna(subset=['LST_C'])

@@ -12,7 +12,7 @@ instance. The expected cloud root is:
 From Windows, create the bundle:
 
 ```powershell
-Set-Location ".\第七版"
+Set-Location ".\归档\第七版"
 powershell -ExecutionPolicy Bypass -File scripts\package_mendota_cloud.ps1
 ```
 

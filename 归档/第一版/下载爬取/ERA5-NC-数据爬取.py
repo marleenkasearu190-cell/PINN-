@@ -189,7 +189,7 @@ def merge_year_data(monthly_template: str, merged_file: Path, year: str):
     try:
         merged = xr.concat(datasets, dim='time')
         merged = merged.sortby('time')
-        temp_merged_file = Path(r'C:\Users\A\Documents\Playground') / merged_file.name
+        temp_merged_file = Path.cwd() / merged_file.name
         if temp_merged_file.exists():
             temp_merged_file.unlink()
         merged.to_netcdf(temp_merged_file, engine='scipy')

@@ -1,3 +1,3 @@
 @echo off
-powershell -ExecutionPolicy Bypass -File "E:\pycharm\ERA5_extracted_temp\????\??Mendota??.ps1" %*
+powershell -ExecutionPolicy Bypass -File "%~dp0运行Mendota流程.ps1" %*
 pause

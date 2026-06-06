@@ -1,13 +1,16 @@
 # 归档说明
 
-本目录用于保留旧版本代码，方便回溯、对照和参考。
+本目录保存历史版本代码和文档，用于回溯、对照和复现实验结论。默认开发入口在仓库根目录的 `第八版/lake_pinn`。
 
-- `第二版`：旧输入结构 PPO 版本，对应 `策略测试/七`，数值 RMSE 表现最好，但不作为当前 11 维主线。
-- `第六版`：multi-lake / few-shot 迁移基线，包含 global adapter、lake-attribute residual、few-shot adapter 和 warm/deep lake 物理约束，保留为第七版前的多湖对照。
-- `第五版`：raw PINN 单湖基线，包含 27 维扩展输入、profile-grid physics、density regularization 和 scorecard v2，保留为 Mohonk T34 对照。
-- `第四版`：模块化 LakePINN 对照，包含 PINN、PPO、Kalman、rolling 预测和分层评分流程，作为第五版前的模块化版本。
-- `第三版`：已验证的 11 维单文件主线、热收支 A 线和剖面评分工具，作为第四版前的稳定对照。
-- `第一版`：上一阶段的主要实现。
-- `第零版`：更早期的集中式脚本版本。
+| 版本 | 定位 | 归档原因 |
+|---|---|---|
+| 第七版 | reconstruction-state / state-space forecaster 前一代主线，代表结果为 Mendota T5 full free-roll RMSE 1.190 | 已被第八版跨湖泛化主线替代 |
+| 第六版 | multi-lake / few-shot 迁移基线，包含 global adapter、lake-attribute residual、few-shot adapter 和 warm/deep lake 物理约束 | 作为第七版和第八版之前的多湖迁移对照 |
+| 第五版 | Mohonk raw PINN 单湖基线，包含 27 维扩展输入、profile-grid physics、density regularization 和 scorecard v2 | 作为 raw PINN 单湖基线 |
+| 第四版 | 模块化 LakePINN 对照，包含 PINN、PPO、Kalman、rolling 预测和分层评分流程 | 作为第五版之前的模块化对照 |
+| 第三版 | 11 维 PINN + PPO/Kalman 单文件主线、热收支 A 线和剖面评分工具 | 作为稳定单文件对照 |
+| 第二版 | 旧输入结构 PPO 版本，对应历史数值最优 `策略测试/七` | 作为旧输入结构数值基线 |
+| 第一版 | 早期数据处理和预测流程 | 历史留档 |
+| 第零版 | 最早期集中式脚本和数据处理尝试 | 历史留档 |
 
-默认开发入口已切换到上一级目录中的 `第七版/lake_pinn`。
+归档目录仍遵守仓库大文件策略：不提交完整实验输出、checkpoint、CSV、外部数据、日志和缓存。

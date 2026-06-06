@@ -39,18 +39,18 @@ T5 的 30 天 free-roll RMSE 为 1.000，说明 bulk-flux + Kz15 + heat-content 
 
 ## 代表图像
 
-![Mendota 2020 v7 T5 year heatmap](../docs/figures/lakepinn_v7_mendota_t5_year_heatmap.png)
+![Mendota 2020 v7 T5 year heatmap](../../docs/figures/lakepinn_v7_mendota_t5_year_heatmap.png)
 
-![Mendota 2020 v7 T5 scorecard report](../docs/figures/lakepinn_v7_mendota_t5_scorecard_report.png)
+![Mendota 2020 v7 T5 scorecard report](../../docs/figures/lakepinn_v7_mendota_t5_scorecard_report.png)
 
-![Mendota 2020 v7 T5 discrete point evaluation](../docs/figures/lakepinn_v7_mendota_t5_discrete_point_evaluation.png)
+![Mendota 2020 v7 T5 discrete point evaluation](../../docs/figures/lakepinn_v7_mendota_t5_discrete_point_evaluation.png)
 
-![Sparkling 2003 v7 R2 year heatmap](../docs/figures/lakepinn_v7_sparkling_r2_year_heatmap.png)
+![Sparkling 2003 v7 R2 year heatmap](../../docs/figures/lakepinn_v7_sparkling_r2_year_heatmap.png)
 
 ## 运行入口
 
 ```powershell
-Push-Location ".\第七版"
+Push-Location ".\归档\第七版"
 python -m lake_pinn --help
 Pop-Location
 ```
@@ -58,7 +58,7 @@ Pop-Location
 训练或导出时需要提供 manifest：
 
 ```powershell
-Push-Location ".\第七版"
+Push-Location ".\归档\第七版"
 python -m lake_pinn `
   --manifest "..\path\to\manifest.json" `
   --output-dir "..\outputs\v7_run" `

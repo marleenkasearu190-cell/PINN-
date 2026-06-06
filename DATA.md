@@ -1,131 +1,57 @@
 # 数据说明
 
-本仓库不直接上传原始数据、验证数据和训练输出。运行第七版 reconstruction-state 入口或归档版本脚本前，需要在本地准备 ERA5 forcing、LST 表面温度、剖面观测数据、湖泊静态属性和 manifest。
+仓库不包含原始数据和完整实验输出。第八版代码默认通过 manifest 指向本地准备好的标准输入文件。
 
-## 数据角色
+## 标准输入
 
-| 数据 | 是否必须 | 用途 |
-|---|---|---|
-| ERA5 daily forcing | 必须 | 提供气温、风速、短波辐射等外部强迫 |
-| LST surface observation | 必须 | 提供湖泊表面温度观测或表层约束 |
-| Profile observations | 训练时建议提供 | 用于 PINN observation loss、validation、Kalman assimilation 和 test 评价切分 |
-| Static lake metadata | 第七版多湖/state reconstruction 建议提供 | 最大深度、平均深度、面积、纬度、经度、体积、海拔、透明度、fetch 等湖泊属性 |
-| Manifest JSON | 第七版必须 | 定义 lake-year 输入、heldout lake、split mode、rollout 设置和训练/导出配置 |
-| Bottom temperature / FLake fields | 可选 | 用于底温、混合层深度等结构诊断或辅助约束 |
+每个 lake-year 通常需要以下文件：
 
-## ERA5 / Forcing CSV
+- ERA5 或等价气象强迫 CSV，例如气温、风速、短波、长波、湿度、气压等。
+- LST 表面温度 CSV，可为真实卫星 LST、日夜 LST sidecar，或 benchmark 中的 no-LST 占位输入。
+- 剖面观测 CSV，用于训练、同化或评估。
+- `metadata.json`，包含湖泊静态属性，例如经纬度、面积、最大深度、平均深度、透明度、fetch、热分区等。
 
-脚本通过 `--era5` 读取日尺度 forcing CSV。建议至少包含：
+典型 manifest 字段：
 
-| 字段 | 含义 |
-|---|---|
-| `Date` | 日期，格式如 `2017-01-01` |
-| 气温列 | 会被整理为 `T_air_C` 或 `surface_air_temp` |
-| 风速列 | 会被整理为 `wind_speed_m_per_s` |
-| 短波辐射列 | 会被整理为 `Solar_W_m2` |
-
-如果存在下列列，脚本也会尝试使用：
-
-| 字段 | 含义 |
-|---|---|
-| `relative_humidity` | 相对湿度 |
-| `surface_pressure` | 表面气压 |
-| `lmld_m` / `MixedLayerDepth_m` | 混合层深度 |
-| `lblt_C` / `BottomTemp_C` | 湖底温度 |
-| `ltlt_C` | 全湖平均温度或相关 FLake 诊断量 |
-
-不同数据源的列名可能不完全相同，脚本内部会做一定的列名兼容和缺失值填补。
-
-## LST CSV
-
-脚本通过 `--lst` 读取湖泊表面温度 CSV。建议包含：
-
-| 字段 | 含义 |
-|---|---|
-| `Date` | 日期 |
-| `LST_surface_C` 或可转换为 LST 的温度列 | 湖泊表面温度，单位摄氏度 |
-| `LST_surface_K` | 可选，单位 Kelvin；脚本可转换为摄氏度 |
-
-如果存在 `SurfaceBulkTarget_C`，脚本会优先使用它作为表层 bulk 目标。它比皮肤温度更接近 0-1 m 表层水温，适合用于 Kalman 表层同化和表层约束。
-
-## Profile Observation CSV
-
-脚本通过 `--profile-obs` 读取剖面观测。支持两种格式。
-
-长表格式：
-
-```csv
-Date,Depth_m,Temperature_C
-2017-01-01,0,1.2
-2017-01-01,1,3.4
+```json
+{
+  "task_mode": "analysis",
+  "split_mode": "time_blocked",
+  "test_lake_id": "carvins_cove_2022",
+  "lakes": [
+    {
+      "lake_id": "example_2024",
+      "era5": "data/_standard_inputs/example_2024/era5_for_model.csv",
+      "lst": "data/_standard_inputs/example_2024/lst_night_for_model.csv",
+      "profile": "data/_standard_inputs/example_2024/profile_for_model.csv",
+      "metadata": "data/_standard_inputs/example_2024/metadata.json",
+      "max_depth": 25.0
+    }
+  ]
+}
 ```
 
-宽表格式：
+## 第八版数据准备
 
-```csv
-Date,Temp_0m,Temp_1m,Temp_2m,Temp_3m
-2017-01-01,1.2,3.4,3.5,3.4
+第八版新增 `scripts/prepare_v8_global_generalization_inputs.py`，用于整理跨湖泛化输入、检查 ERA/LST/profile 完整性、生成 candidate/audit 表和 manifest。默认输出写入未提交的 `experiments/` 目录。
+
+```powershell
+Push-Location ".\第八版"
+python scripts\prepare_v8_global_generalization_inputs.py `
+  --standard-root "..\data\_standard_inputs" `
+  --output-dir "..\experiments\v8_input_prep"
+Pop-Location
 ```
 
-评分脚本 `lake_profile_scorecard.py` 同样支持这两种格式。
+PGDL-WRR benchmark 脚本会下载外部公开数据到 `第八版/external/`，并输出到 `第八版/experiments/`。这两个目录都不提交。
 
-## Manifest JSON
+## 不提交策略
 
-第七版通过 `--manifest` 读取多湖或单湖实验配置。manifest 建议包含：
+以下内容受 `.gitignore` 保护：
 
-| 字段 | 含义 |
-|---|---|
-| `experiment` | 实验名称 |
-| `task_mode` | 通常为 `analysis`、`reconstruction` 或 `hindcast` |
-| `split_mode` | 剖面切分方式，例如 `time_blocked` |
-| `depth_points` | 状态剖面深度网格数量 |
-| `history_window_days` | forcing history 窗口 |
-| `max_rollout_days` | 默认滚动预测天数 |
-| `test_lake_id` / `test_lake_ids` | heldout lake-year |
-| `heldout_lake_groups` | 需要整组排除的湖泊组 |
-| `lakes[]` | 每个 lake-year 的 `era5`、`lst`、`profile_obs`、`metadata` 和 `max_depth` |
+- `experiments/`、`external/`、`_archive/`。
+- `tests/experiments/`、`tests/lst_ablation_data/`。
+- `*.csv`、`*.pt`、`*.pth`、`*.ckpt`、`*.zip`、`*.log`、`*.pid`、`*.gz`。
+- 所有 PNG 默认忽略，只有 `docs/figures/*.png` 可作为精选公开图提交。
 
-本地 manifest 可以保留绝对路径；公开仓库只保留模板或说明，不提交完整数据 manifest。
-
-## Static Lake Metadata
-
-第七版 state forecaster、归档第六版 `global_adapter` 和 few-shot 迁移都会使用湖泊静态属性构建 lake representation。建议在标准输入 manifest 或数据表中提供：
-
-| 字段 | 含义 |
-|---|---|
-| `lake_id` / `lake_name` | 湖泊标识和名称 |
-| `max_depth_m` / `mean_depth_m` | 最大水深和平均水深 |
-| `area_km2` / `volume_m3` | 面积和体积 |
-| `latitude` / `longitude` | 地理位置 |
-| `elevation_m` | 海拔 |
-| `secchi_m` 或 `light_extinction_kd` | 透明度或光衰减 |
-| `fetch_m` / `wind_exposure` | 风暴露和有效 fetch |
-
-缺失字段会使用默认值或从湖名/输入路径推断，但多湖泛化效果更依赖这些属性的稳定性。
-
-## Profile Split
-
-第七版通过 manifest / CLI 支持 `time_blocked`、`seasonal_blocked` 和 `depth_interleaved`。归档第五版和第六版支持 `--profile-split-mode time_blocked` 和 `seasonal_blocked`。归档第三版和第四版默认使用 `time_blocked`。这些切分会把剖面观测分为：
-
-| 子集 | 用途 |
-|---|---|
-| `train` | 进入 PINN observation loss |
-| `val` | 用于模型选择、早停和 PPO reward 对齐 |
-| `assim` | 用于 Kalman profile assimilation |
-| `test` | 只用于最终评价，不参与训练或同化 |
-
-这个切分方式可以降低时间泄露风险，比随机深度交错切分更接近真实预测任务。
-
-## Kalman 同化数据
-
-Kalman 预测阶段可以同化：
-
-- `assim` profile observations：剖面温度观测。
-- `SurfaceBulkTarget_C` 或 `LST_surface_C`：表层观测链路。
-- `BottomTemp_C`：可选底温信息。
-
-`test` profile truth 不应在预测阶段被同化，只用于最终评分。
-
-## 不上传数据的原因
-
-原始数据、ERA5、LST、验证剖面、预测 CSV、热图和 checkpoint 通常体积较大，并且来源、许可和版本需要单独说明。因此仓库只保存代码和文档，数据保留在本地或单独的数据发布位置。
+如需公开完整结果，应单独整理为论文附录、报告包或数据发布包。

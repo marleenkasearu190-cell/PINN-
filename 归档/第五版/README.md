@@ -39,7 +39,7 @@
 ## 运行入口
 
 ```powershell
-cd E:\pycharm\PINN\github仓库\PINN-\归档\第五版
+cd <repo>\归档\第五版
 python -m lake_pinn --help
 ```
 

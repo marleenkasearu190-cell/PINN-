@@ -7,7 +7,7 @@
 $ErrorActionPreference = 'Stop'
 
 $BaseDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$PythonExe = 'E:\pycharm\.venv\Scripts\python.exe'
+$PythonExe = Join-Path $BaseDir '..\.venv\Scripts\python.exe'
 $DownloadExtractScript = Join-Path $BaseDir '下载提取一体.py'
 $ModelScript = Join-Path $BaseDir '物理参数.py'
 $DailyCsv = Join-Path $BaseDir 'ERA5_mendota_2018_Daily.csv'

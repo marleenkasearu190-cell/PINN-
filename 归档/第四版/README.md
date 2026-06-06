@@ -29,7 +29,7 @@
 运行时建议先进入归档第四版目录：
 
 ```powershell
-cd E:\pycharm\PINN\github仓库\PINN-\归档\第四版
+cd <repo>\归档\第四版
 python -m lake_pinn --help
 ```
 

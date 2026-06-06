@@ -1,121 +1,43 @@
 # 模型说明
 
-第七版路线将主线切换为 reconstruction-state / state-space forecaster：模型不再只学习独立的 `T(z,t)` 函数，而是从当前温度剖面状态、forcing 历史和湖泊静态属性推进下一步剖面。物理约束重点转为热含量转移、垂向扩散、bulk turbulent flux、密度稳定、free-roll 漂移和 segment rollout 稳定性。
+当前主线是 `第八版/lake_pinn`。模型不再把所有任务都视为静态函数拟合 `T(z,t)`，而是采用 reconstruction-state / state-space forecaster：以当前温度剖面状态、气象强迫、LST 信息和湖泊属性为输入，预测下一步剖面演化，并在滚动过程中约束物理一致性。
 
-## 输入与输出
+## 核心结构
 
-第七版默认通过 manifest 读取 lake-year 输入。每个 lake-year 至少需要 ERA5 forcing、LST、profile observations 和 metadata；模型内部会构建 forcing history、静态湖泊属性、深度网格、hypsometry 和当前剖面状态。归档第五版/第六版的直接 PINN 输入维度不再是第七版主接口。
+- `state_model.py` 定义状态推进网络、forcing batch、lake static features、residual tendency 和物理缩放参数。
+- `state_multilake.py` 负责多湖 manifest 训练、heldout lake 评估、segment rollout、rolling horizon、导出和 scorecard 集成。
+- `vertical_solver.py` 与 `hypsometry.py` 提供垂向扩散、层厚和湖盆面积剖面处理。
+- `physics.py`、`forcing.py`、`conditional_priors.py` 提供水密度、湍流通量、表层强迫修正、条件先验和 warm/deep lake 约束。
+- `standard_inputs.py` 与 `scripts/prepare_v8_global_generalization_inputs.py` 用于标准输入和第八版跨湖泛化数据准备。
 
-| 输入 | 含义 |
-|---|---|
-| Manifest | lake-year 列表、heldout lake 设置、路径和训练参数 |
-| ERA5 / forcing | 气温、风、短波、长波或可派生 flux 项 |
-| LST | 表层观测、初始化和可选表层同化 |
-| Profile observations | transition loss、state initialization、validation 和 scorecard |
-| Metadata / hypsometry | 最大水深、面积、纬度、体积、透明度等静态属性 |
+## 第八版新增重点
 
-输出为：
+- extended metadata：扩展湖泊静态属性，支持更多 lake-year 的跨湖泛化。
+- temporal adaptive：让部分自适应参数随时间和状态变化，而不是只依赖固定湖泊属性。
+- LST dropout 与 segment LST weak loss：降低 LST 依赖，同时保留表层观测对滚动段的弱约束。
+- surface/ice latent reservoir：处理表层和结冰期热量滞留。
+- warm-column heat-content loss：约束暖季水柱热含量，减少夏秋季系统漂移。
+- roll60/export25：训练和导出更关注长时段滚动稳定性，并统一 0-25 m 公开评估口径。
+- PGDL-WRR benchmark：提供无 LST 条件下与官方 PGDL-WRR 2019 Mendota 结果对比的工具脚本。
 
-| 输出 | 含义 |
-|---|---|
-| `T_next(z)` | 从当前剖面状态推进得到的下一步水温剖面，单位摄氏度 |
+## 公共接口
 
-## PINN 主体
+主要入口：
 
-`LakePINN` 是一个多层感知机。网络不直接输出整张热图，而是学习函数：
-
-```text
-T = f(t_norm, z_norm, forcing, lake_metadata)
+```powershell
+Push-Location ".\第八版"
+python -m lake_pinn --manifest "..\path\to\manifest.json" --output-dir "..\outputs\v8_run"
+Pop-Location
 ```
 
-预测年度热图时，脚本会在每日时间网格和深度网格上调用模型，得到完整温度剖面序列。
+Python API 入口集中在 `lake_pinn.api`，CLI 入口由 `lake_pinn.__main__` 调用 `state_multilake.main()`。
 
-第六版归档版本新增 `GlobalAdaptiveLakePINN`：
+## 评估逻辑
 
-```text
-T = global_backbone(t, z, forcing, lake_metadata) + lake_adapter(lake_metadata, shared_state)
-```
+第八版不只看单步 transition RMSE。公开结果优先关注：
 
-其中 global backbone 学跨湖共享结构，lake adapter / residual 学湖泊属性驱动的差异。few-shot 模块可以冻结 global checkpoint，只用少量目标湖剖面日期训练 residual adapter。
-
-第七版新增 `LakeStateForecaster`：
-
-```text
-T(t + dt, z) = M(T(t, z), forcing[t:t+dt], lake_metadata, hypsometry)
-```
-
-其中 state model 负责预测剖面增量和物理尺度，vertical solver 负责垂向扩散和面积加权热源，reconstruction 模块负责初始化、spinup、LST 同化和 free-roll 导出。
-
-## 物理约束
-
-LakePINN 脚本中的主要物理项包括：
-
-| 物理项 | 作用 |
-|---|---|
-| PDE residual | 约束一维垂向热扩散和短波穿透加热 |
-| Surface boundary condition | 用表面能量平衡约束湖面热通量 |
-| Bottom boundary condition | 底部近似零通量或弱通量条件 |
-| Initial condition | 约束初始温度剖面 |
-| Observation loss | 约束模型贴近剖面观测或表层观测 |
-| Smoothness / structure terms | 抑制不合理振荡，辅助维持季节结构 |
-| Density / Richardson diffusivity | 根据密度梯度和 Richardson 数调节垂向扩散，稳定分层降低混合，密度倒置增强混合 |
-| Warm/deep lake constraints | 针对 Kinneret 等暖深湖约束冬季弱梯度、Jan deep memory 和深层慢变化 |
-| Heat-content transition | 约束相邻剖面之间的整柱热含量变化 |
-| Bulk turbulent flux | 用 bulk formula 或已提供 flux 驱动表面热通量 |
-| Segment rollout / free-roll | 用多日滚动误差约束状态推进稳定性 |
-| Latent reservoir freezing | 用 latent heat reservoir 处理冰点附近能量滞留 |
-
-热收支 A 线进一步实验了能量版整柱热收支：
-
-```text
-d(heat content)/dt ≈ surface energy flux + penetrating shortwave
-```
-
-该实验线有价值，但目前作为归档对照保留。
-
-## Kalman 同化
-
-Kalman 部分用于预测和在线修正阶段。它不是替代 PINN，而是在 PINN 给出的剖面预测基础上融合观测信息。
-
-可同化数据包括：
-
-- `assim` 剖面观测。
-- `SurfaceBulkTarget_C` 或 `LST_surface_C` 表层观测链路。
-- 可选 `BottomTemp_C` 底温信息。
-
-当前 Kalman 参数包括：
-
-| 参数 | 含义 |
-|---|---|
-| `process` | 过程噪声缩放 |
-| `obs` | 观测噪声缩放 |
-| `correlation_length` | 垂向相关长度 |
-| `forecast_blend` | forecast 与同化更新之间的混合比例 |
-
-## PPO 调度
-
-PPO 不直接预测温度剖面。温度剖面由 PINN 输出，PPO 的角色是学习调度策略：
-
-- 动态调节 PINN 损失权重。
-- 在允许时调节 Kalman 参数。
-- 根据物理诊断量、验证误差和代理指标改进训练/预测流程。
-
-因此更准确的说法是：
-
-```text
-PINN 学 T(z,t)，PPO 学怎样调度物理约束和同化参数。
-```
-
-## 当前主线判断
-
-`第七版/lake_pinn/` 是当前推荐继续研究的模块化版本。它承接第六版多湖输入和评分资产，但将核心模型切换为 reconstruction-state forecaster，重点优化长时段 free-roll 稳定性。
-
-`归档/第六版/lake_pinn/` 是 multi-lake / few-shot 归档基线。它承接第五版 raw PINN 包结构，新增多湖 global adapter、few-shot 适配和 warm/deep lake 物理约束。
-
-`归档/第五版/lake_pinn/` 是已归档的 Mohonk raw PINN 基线。它承接第四版包结构，把 raw PINN 作为默认预测输出，并将更多物理形态约束前移到训练阶段。
-
-`归档/第四版/lake_pinn/` 是第四版模块化对照。它承接 run9 后续实验，把训练、预测、Kalman 同化、PPO 调度和评分工具拆开维护。
-
-`归档/第三版/PPO策略调控_11维主线_20260426.py` 是已归档的 11 维单文件主线。它不是所有实验中 RMSE 最低的版本，但在 11 维输入、物理形态和季节过程之间更平衡，适合作为稳定对照。
-
-`归档/第三版/PPO策略调控_热收支A线_20260428.py` 是已归档实验线。A3/A4 说明能量版热收支有潜力，但预测阶段仍需继续检查 PPO / Kalman / heat-budget 的耦合。
+- heldout lake-year 的 observed-point RMSE 和 bias。
+- 年度热图是否保持合理季节结构。
+- bias contour 是否显示系统性冷偏或热偏。
+- scorecard 中的分层误差、季节误差和观测点匹配结果。
+- 长时段 rollout 是否出现漂移、翻混异常或不合理密度结构。

@@ -1,73 +1,75 @@
-# Reproduction Guide
+# 复现说明
 
-This repository contains code and documentation only. Raw data, trained checkpoints, prediction CSV files, and figures are intentionally kept out of Git. To reproduce a run, prepare the input data and checkpoint locally, then use the commands below.
+本文档给出公开仓库层面的最小复现方式。由于原始数据、checkpoint 和完整实验输出没有提交，完整数值复现需要本地准备 manifest 指向的数据文件。
 
-For the author's current machine, private absolute paths are kept in `REPRODUCE_LOCAL.md`. That file is ignored by Git.
+## 环境
 
-## Required Inputs
-
-Prepare the following files:
-
-| File | Example path | Purpose |
-|---|---|---|
-| ERA5 forcing CSV | `data/ERA5_daily.csv` | Daily meteorological forcing |
-| MODIS LST CSV | `data/LST_2017.csv` | Lake surface temperature observation |
-| Manifest JSON | `manifests/mendota_reconstruction.json` | Lake-year inputs and heldout settings for seventh-edition runs |
-| State-forecaster checkpoint | `checkpoints/global_state_forecaster_checkpoint.pt` | Optional trained model for export-only mode |
-| Profile truth CSV | `data/profile_truth.csv` | Optional truth file for scoring |
-
-The expected data formats are described in [`DATA.md`](./DATA.md). The current recommended model line is the seventh-edition reconstruction-state pipeline described in [`MODEL.md`](./MODEL.md).
-
-## Environment
-
-Use Python 3.10 or newer.
+建议使用 Python 3.10 或更新版本。
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-## Train Or Export
+验证当前主线入口：
 
 ```powershell
-Push-Location ".\第七版"
+Push-Location ".\第八版"
+python -m compileall -q lake_pinn tests scripts benchmarks
+python -m pytest tests -q
+python -m lake_pinn --help
+Pop-Location
+```
+
+当前第八版本地测试记录为 `149 passed`。
+
+## 训练示例
+
+```powershell
+Push-Location ".\第八版"
 python -m lake_pinn `
-  --manifest "..\manifests\mendota_reconstruction.json" `
-  --output-dir "..\outputs\v7_train" `
-  --epochs 200 `
+  --manifest "..\path\to\manifest.json" `
+  --output-dir "..\outputs\v8_run" `
+  --epochs 120 `
   --device cpu
 Pop-Location
 ```
 
-Expected outputs:
+GPU 训练可参考 [`第八版/CLOUD_GPU_README.md`](./第八版/CLOUD_GPU_README.md)。
 
-- `global_state_forecaster_training_history.csv`
-- `global_state_forecaster_checkpoint.pt`
-- heldout `*_temperature_depth_predictions.csv`
-- heldout `*_year_heatmap.png`
-- heldout scorecard and diagnostic figures
-
-## Score
+## 导出示例
 
 ```powershell
-python ".\第七版\lake_pinn\lake_profile_scorecard.py" `
-  --truth ".\data\profile_truth.csv" `
-  --pred ".\outputs\v7_train\heldout_temperature_depth_predictions.csv" `
-  --label "main_predict" `
-  --out-dir ".\outputs\score_main"
+Push-Location ".\第八版"
+python -m lake_pinn `
+  --manifest "..\path\to\manifest.json" `
+  --checkpoint-path "..\outputs\v8_run\global_state_forecaster_checkpoint.pt" `
+  --output-dir "..\outputs\v8_export" `
+  --export-only `
+  --device cpu
+Pop-Location
 ```
 
-The score script writes `scorecard_summary.csv`, `scorecard_scores.csv`, `scorecard_vetoes.csv`, and `scorecard_diagnostics.csv`.
+## PGDL-WRR benchmark
 
-## Recommended Public Reporting
+第八版包含 `benchmarks/pgdl_wrr_compare.py`，用于构建 Mendota PGDL-WRR 2019 对照。该脚本会下载外部数据到未提交的 `external/`，并把结果写到未提交的 `experiments/`。
 
-When reporting results, keep three things separate:
+```powershell
+Push-Location ".\第八版"
+python benchmarks\pgdl_wrr_compare.py --skip-download
+Pop-Location
+```
 
-- The current research mainline: `第七版/lake_pinn/`.
-- The archived sixth-edition multi-lake / few-shot baseline: `归档/第六版/lake_pinn/`.
-- The archived fifth-edition Mohonk raw PINN baseline: `归档/第五版/lake_pinn/`.
-- The archived fourth-edition modular reference: `归档/第四版/lake_pinn/`.
-- The archived third-edition single-file reference: `归档/第三版/PPO策略调控_11维主线_20260426.py`.
-- Historical numeric baselines: archived second-edition runs such as `策略测试/七`.
-- Experimental physics variants: heat-budget A-line runs such as `11维测试/十六` and `11维测试/十七`.
+首次运行如果需要下载官方数据，可去掉 `--skip-download`。
 
-The project position is summarized in [`EXPERIMENTS.md`](./EXPERIMENTS.md): the historical second-edition route has the lowest Mohonk 2017 RMSE, the third-, fourth-, fifth-, and sixth-edition routes remain archived references, and the seventh-edition package is the recommended line for continued reconstruction-state and long free-roll research.
+## 验收检查
+
+提交前应执行：
+
+```powershell
+python -m compileall -q .\第八版\lake_pinn .\第八版\tests .\第八版\scripts .\第八版\benchmarks
+Push-Location .\第八版; python -m pytest tests -q; python -m lake_pinn --help > $null; Pop-Location
+git diff --check
+rg -n "<local absolute path patterns>" .
+```
+
+并确认没有 checkpoint、CSV、完整实验目录、外部数据、日志或缓存文件进入提交。

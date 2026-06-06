@@ -9,6 +9,10 @@ __pycache__/
 REPRODUCE_LOCAL.md
 数据/
 experiments/
+external/
+_archive/
+tests/experiments/
+tests/lst_ablation_data/
 11维测试/
 策略测试/
 score_outputs*/
@@ -21,7 +25,10 @@ PINN_repro_score_outputs*/
 *.ckpt
 *.zip
 *.log
+*.gz
+*.pid
 pid.txt
+*.csv
 *_temperature_depth_predictions.csv
 *_july_temperature_depth_predictions.csv
 *_kalman_diagnostics.csv
