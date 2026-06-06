@@ -9,7 +9,6 @@ LakePINN 是一个面向湖泊温度剖面预测的研究型实验仓库。项�
 - 第八版是当前跨湖泛化主线，公开主结果来自 R9 epoch0099 的三湖整湖 heldout 评估。
 - 第零版到第七版均保留在 `归档/`，用于回溯模型结构、数据流程和实验基线。
 - README 只展示核心指标和少量代表图，完整实验记录见 [`EXPERIMENTS.md`](./EXPERIMENTS.md) 与各版本实验总结。
-- 原始数据、checkpoint、预测 CSV、日志和完整实验目录不提交到 GitHub，避免仓库被本地大文件污染。
 
 ## 项目状态
 
@@ -121,15 +120,3 @@ python -m lake_pinn `
   --device cpu
 Pop-Location
 ```
-
-## 不提交的内容
-
-以下内容保留在本地实验目录，不直接提交到 GitHub：
-
-- 原始数据、验证数据和标准化输入数据。
-- 训练 checkpoint，例如 `*.pt`、`*.pth`、`*.ckpt`。
-- 完整 `experiments/`、`external/`、`_archive/` 目录。
-- 预测 CSV、scorecard CSV、diagnostics CSV、批量 PNG、日志、zip 包和进程文件。
-- `__pycache__/`、`.pytest_cache/`、`.pyc` 等缓存。
-
-仓库中的 PNG 仅限 `docs/figures/` 下精选代表图。
