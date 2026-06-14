@@ -9,8 +9,11 @@ __pycache__/
 REPRODUCE_LOCAL.md
 数据/
 experiments/
+results/
 external/
 _archive/
+brief_assets_*/
+LakePINN_进展交流简报_*/
 tests/experiments/
 tests/lst_ablation_data/
 11维测试/
@@ -24,6 +27,7 @@ PINN_repro_score_outputs*/
 *.pth
 *.ckpt
 *.zip
+*.pptx
 *.log
 *.gz
 *.pid

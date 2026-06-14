@@ -1,13 +1,13 @@
-# 第八版：跨湖泛化 LakePINN 主线
+# 第八版：跨湖泛化 LakePINN 归档基线
 
-第八版是当前主线。它在第七版 reconstruction-state / state-space forecaster 的基础上，继续推进跨湖泛化和长时段滚动稳定性，重点加入 extended metadata、temporal adaptive、LST dropout、segment LST weak loss、surface/ice latent reservoir、warm-column heat-content loss，以及 roll60/export25 公开导出口径。
+第八版曾是跨湖泛化主线，现在已归档为第九版之前的 R9 warm-column 基线。它在第七版 reconstruction-state / state-space forecaster 的基础上，继续推进跨湖泛化和长时段滚动稳定性，重点加入 extended metadata、temporal adaptive、LST dropout、segment LST weak loss、surface/ice latent reservoir、warm-column heat-content loss，以及 roll60/export25 公开导出口径。
 
 本目录只保存可维护源码、测试、脚本、benchmark 脚本和说明文档。完整 `experiments/`、`external/`、`_archive/`、checkpoint、CSV、日志和缓存文件不进入 GitHub。
 
 ## 目录结构
 
 ```text
-第八版/
+归档/第八版/
 |-- README.md
 |-- 更新说明.md
 |-- 实验总结.md
@@ -46,18 +46,18 @@ checkpoint/export: epoch0099
 
 ## 代表图
 
-![Lacawac 2016 year heatmap](../docs/figures/lakepinn_v8_r9_epoch0099_lacawac_year_heatmap.png)
+![Lacawac 2016 year heatmap](../../docs/figures/lakepinn_v8_r9_epoch0099_lacawac_year_heatmap.png)
 
-![Carvins Cove 2022 bias contour](../docs/figures/lakepinn_v8_r9_epoch0099_carvins_cove_bias_contour_heatmap.png)
+![Carvins Cove 2022 bias contour](../../docs/figures/lakepinn_v8_r9_epoch0099_carvins_cove_bias_contour_heatmap.png)
 
-![Lake Maggiore 2024 scorecard](../docs/figures/lakepinn_v8_r9_epoch0099_lake_maggiore_scorecard_report.png)
+![Lake Maggiore 2024 scorecard](../../docs/figures/lakepinn_v8_r9_epoch0099_lake_maggiore_scorecard_report.png)
 
 完整图像索引见 [`实验总结.md`](./实验总结.md)。
 
 ## 运行入口
 
 ```powershell
-Push-Location ".\第八版"
+Push-Location ".\归档\第八版"
 python -m lake_pinn --help
 Pop-Location
 ```
@@ -65,7 +65,7 @@ Pop-Location
 训练示例：
 
 ```powershell
-Push-Location ".\第八版"
+Push-Location ".\归档\第八版"
 python -m lake_pinn `
   --manifest "..\path\to\manifest.json" `
   --output-dir "..\outputs\v8_run" `
@@ -77,8 +77,8 @@ Pop-Location
 ## 验证
 
 ```powershell
-python -m compileall -q .\第八版\lake_pinn .\第八版\tests .\第八版\scripts .\第八版\benchmarks
-Push-Location .\第八版; python -m pytest tests -q; python -m lake_pinn --help > $null; Pop-Location
+python -m compileall -q .\归档\第八版\lake_pinn .\归档\第八版\tests .\归档\第八版\scripts .\归档\第八版\benchmarks
+Push-Location .\归档\第八版; python -m pytest tests -q; python -m lake_pinn --help > $null; Pop-Location
 ```
 
 当前本地验证结果：`149 passed`。

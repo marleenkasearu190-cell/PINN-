@@ -2,6 +2,29 @@
 
 本文档汇总仓库中适合公开展示的实验结论。完整实验目录、checkpoint、预测 CSV 和日志不直接提交，只保留关键指标和代表图。
 
+## 第九版主记录
+
+主记录：`RECON_L3_SUPPORT_DELTA_MAGNITUDE_OVERNIGHT_v1`，采用 `best_by_val_rolling` checkpoint，选择 epoch `47`。
+
+| 实验 | epoch | selection score | few-shot 30d RMSE | few-shot 60d RMSE | rolling-start 30d RMSE | rolling-start 60d RMSE | 说明 |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `RECON_L3_SUPPORT_DELTA_MAGNITUDE_OVERNIGHT_v1` | 47 | 2.441 | 2.486 | 2.396 | 1.995 | 2.233 | 第九版主记录 |
+| `RECON_L3_SUPPORT_DELTA_MAGNITUDE_DIAG_v1` | 11 | 3.630 | 3.828 | 3.432 | 2.226 | 2.528 | L3 诊断对照 |
+| `RECON_L2_SINGLELAKE_RECON_SANITY_v1` | 17 | 3.007 | - | - | 2.558 | 3.457 | 单湖 reconstruction sanity；无 few-shot 指标 |
+
+诊断结论：
+
+- `RECON_DIAG_1D_LOOP_CONSISTENCY_v1` 通过：checkpoint validation transition 1d RMSE `0.300`，rolling 1d RMSE `0.308`，ratio `1.027`。
+- `RECON_DIAG_SUPPORT_UPDATE_EFFECT_v1` 表明 support update 在 query-start 处有效：checkpoint validation base RMSE `6.162`，corrected RMSE `6.056`，delta `-0.106`，direction hit `0.967`，leak count `0`。
+- R11 export-only 诊断显示观测锚定能明显降低 export 误差：free RMSE `4.07`，support_train `0.624`，profile_train `0.531`，support_all `0.324`，profile_all `0.0561`。该组仅作为诊断，不作为 formal transfer claim。
+- R11 lake-type 诊断显示 Natural 与 Reservoir 偏差方向不同：Natural RMSE `2.74`、bias `+1.88`；Reservoir RMSE `4.35`、bias `-3.01`。
+
+代表图：
+
+- [reconstruction framework](./docs/figures/lakepinn_v9_recon_framework_operator_flow.png)
+- [R11 export modes RMSE](./docs/figures/lakepinn_v9_r11_export_modes_rmse.png)
+- [R11 lake-type RMSE and bias](./docs/figures/lakepinn_v9_r11_laketype_bias_rmse.png)
+
 ## 第八版主结果
 
 主结果：`R9_WARMCOL_LST_SURFICE_ALL38_holdout3_120ep_roll60_export25_20260605`，采用 `epoch0099` 导出结果。
@@ -42,7 +65,8 @@ PGDL-WRR benchmark 用于公平 no-LST 对照：
 
 | 版本 | 代表实验 | RMSE | MAE | bias | 说明 |
 |---|---|---:|---:|---:|---|
-| 第八版 | `R9_WARMCOL...epoch0099` | 3.856 | - | 2.161 abs | 三湖 heldout 平均，当前跨湖泛化主结果 |
+| 第九版 | `RECON_L3_SUPPORT_DELTA_MAGNITUDE_OVERNIGHT_v1` | 2.441 | - | - | selection score；few-shot 30d/60d 为 2.486 / 2.396 |
+| 第八版 | `R9_WARMCOL...epoch0099` | 3.856 | - | 2.161 abs | 三湖 heldout 平均，跨湖泛化主结果 |
 | 第七版 | `T5_Mendota2020_bulkFlux_kz15_heat005_200ep_cloud` | 1.190 | 0.837 | -0.466 | Mendota 2020 full free-roll 最稳 |
 | 第六版 | `T54_Kinneret修复时间步长后T51微调` | 0.670 | 0.443 | -0.159 | Kinneret 单湖最优 |
 | 第六版 | `Sparkling lakeSpecificResidual softBound surfaceUniform 20d` | 1.402 | 1.078 | 0.340 | Sparkling few-shot 最优 |
@@ -53,7 +77,8 @@ PGDL-WRR benchmark 用于公平 no-LST 对照：
 
 ## 代表图索引
 
-- 第八版 R9：Lacawac、Carvins Cove、Lake Maggiore 的 year heatmap、bias contour 和 scorecard 已整理到 `docs/figures/`。
+- 第九版：reconstruction operator framework、R11 export mode RMSE、R11 lake-type RMSE/bias 已整理到 `docs/figures/`。
+- 第八版 R9：Lacawac、Carvins Cove、Lake Maggiore 的 year heatmap、bias contour 和 scorecard 已保留。
 - 第七版 T5：Mendota year heatmap、scorecard、discrete point evaluation、bias contour 已保留。
 - 第六版：Kinneret T54、Sparkling few-shot、Mendota LOO zero-shot 代表图已保留。
 - 第五版及以前：Mohonk raw PINN、11D 主线、RMSE/bias 月深度诊断图已保留。

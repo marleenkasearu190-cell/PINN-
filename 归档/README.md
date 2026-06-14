@@ -1,9 +1,10 @@
 # 归档说明
 
-本目录保存历史版本代码和文档，用于回溯、对照和复现实验结论。默认开发入口在仓库根目录的 `第八版/lake_pinn`。
+本目录保存历史版本代码和文档，用于回溯、对照和复现实验结论。默认开发入口在仓库根目录的 `第九版/lake_pinn`。
 
 | 版本 | 定位 | 归档原因 |
 |---|---|---|
+| 第八版 | 跨湖泛化主线，代表结果为 R9 epoch0099 三湖 heldout 平均 RMSE 3.856 | 已被第九版 reconstruction 诊断与 support 迁移主线替代 |
 | 第七版 | reconstruction-state / state-space forecaster 前一代主线，代表结果为 Mendota T5 full free-roll RMSE 1.190 | 已被第八版跨湖泛化主线替代 |
 | 第六版 | multi-lake / few-shot 迁移基线，包含 global adapter、lake-attribute residual、few-shot adapter 和 warm/deep lake 物理约束 | 作为第七版和第八版之前的多湖迁移对照 |
 | 第五版 | Mohonk raw PINN 单湖基线，包含 27 维扩展输入、profile-grid physics、density regularization 和 scorecard v2 | 作为 raw PINN 单湖基线 |

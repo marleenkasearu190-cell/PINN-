@@ -1,32 +1,31 @@
 # 模型说明
 
-当前主线是 `第八版/lake_pinn`。模型不再把所有任务都视为静态函数拟合 `T(z,t)`，而是采用 reconstruction-state / state-space forecaster：以当前温度剖面状态、气象强迫、LST 信息和湖泊属性为输入，预测下一步剖面演化，并在滚动过程中约束物理一致性。
+当前主线是 `第九版/lake_pinn`。模型延续 reconstruction-state / state-space forecaster：以当前温度剖面状态、气象强迫、LST 信息和湖泊属性为输入，预测下一步剖面演化，并在滚动过程中约束物理一致性。第九版的重点不是新增一个单纯数值最优热图，而是围绕 zero-profile reconstruction、support profile 校正和 few-shot 迁移失败来源做系统诊断。
 
 ## 核心结构
 
 - `state_model.py` 定义状态推进网络、forcing batch、lake static features、residual tendency 和物理缩放参数。
-- `state_multilake.py` 负责多湖 manifest 训练、heldout lake 评估、segment rollout、rolling horizon、导出和 scorecard 集成。
+- `state_multilake.py` 负责多湖 manifest 训练、heldout lake 评估、segment rollout、rolling horizon、reconstruction export 和 scorecard 集成。
+- `state_reconstruction.py` 提供 initial state reconstruction、support assimilation、LSWT observer update、zero-profile 初始化和 rollout state 工具。
 - `vertical_solver.py` 与 `hypsometry.py` 提供垂向扩散、层厚和湖盆面积剖面处理。
 - `physics.py`、`forcing.py`、`conditional_priors.py` 提供水密度、湍流通量、表层强迫修正、条件先验和 warm/deep lake 约束。
-- `standard_inputs.py` 与 `scripts/prepare_v8_global_generalization_inputs.py` 用于标准输入和第八版跨湖泛化数据准备。
+- `scripts/` 下的 pipeline controller、roadmap、tiered smoke 和 R19-R35 诊断脚本用于组织第九版 reconstruction 实验。
 
-## 第八版新增重点
+## 第九版新增重点
 
-- extended metadata：扩展湖泊静态属性，支持更多 lake-year 的跨湖泛化。
-- temporal adaptive：让部分自适应参数随时间和状态变化，而不是只依赖固定湖泊属性。
-- LST dropout 与 segment LST weak loss：降低 LST 依赖，同时保留表层观测对滚动段的弱约束。
-- surface/ice latent reservoir：处理表层和结冰期热量滞留。
-- warm-column heat-content loss：约束暖季水柱热含量，减少夏秋季系统漂移。
-- roll60/export25：训练和导出更关注长时段滚动稳定性，并统一 0-25 m 公开评估口径。
-- PGDL-WRR benchmark：提供无 LST 条件下与官方 PGDL-WRR 2019 Mendota 结果对比的工具脚本。
+- zero-profile reconstruction：在缺少目标剖面初始化时，显式评估从先验状态进入 rollout 的误差来源。
+- support profile assimilation：用少量 support profile 校正 query-start 初始状态，并检查校正是否朝观测方向移动。
+- sparse observer / LSWT observer autopsy：分析表层 LST 更新是否过深、过强，或在不同湖泊类型上产生相反偏差。
+- tiered experiment control：通过 L1/L2/L3/L4/L7 分层 smoke、diagnostic 和 overnight 任务减少盲目长跑。
+- diagnostic-only export modes：区分 free、support_train、profile_train、support_all、profile_all 等 export 口径，避免把带观测锚定的诊断结果误当 formal transfer claim。
 
 ## 公共接口
 
 主要入口：
 
 ```powershell
-Push-Location ".\第八版"
-python -m lake_pinn --manifest "..\path\to\manifest.json" --output-dir "..\outputs\v8_run"
+Push-Location ".\第九版"
+python -m lake_pinn --manifest "..\path\to\manifest.json" --output-dir "..\outputs\v9_run"
 Pop-Location
 ```
 
@@ -34,10 +33,8 @@ Python API 入口集中在 `lake_pinn.api`，CLI 入口由 `lake_pinn.__main__` 
 
 ## 评估逻辑
 
-第八版不只看单步 transition RMSE。公开结果优先关注：
+第九版评估时区分三类结果：
 
-- heldout lake-year 的 observed-point RMSE 和 bias。
-- 年度热图是否保持合理季节结构。
-- bias contour 是否显示系统性冷偏或热偏。
-- scorecard 中的分层误差、季节误差和观测点匹配结果。
-- 长时段 rollout 是否出现漂移、翻混异常或不合理密度结构。
+- main record：`RECON_L3_SUPPORT_DELTA_MAGNITUDE_OVERNIGHT_v1`，以 validation few-shot 30d/60d 和 rolling-start 30d/60d 为主。
+- diagnostic consistency：1d closed-loop 与 teacher-forced transition 是否一致，support update 是否改善 query-start profile。
+- diagnostic-only export：R11 export modes 和 lake-type bias/RMSE 只用于定位误差来源，不作为正式泛化主结果。
