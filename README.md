@@ -47,11 +47,11 @@ PINN-
 - support update 会把 query-start prior profile 朝观测 query-start profile 推近：checkpoint validation corrected RMSE 比 base RMSE 低 `0.106 C`，无泄漏记录。
 - R11 export-only 诊断显示观测锚定可以显著降低 export 误差，但 Natural 与 Reservoir 的 free-roll 偏差方向相反，需要按湖泊类型继续诊断。
 
-![LakePINN v9 reconstruction framework](./docs/figures/lakepinn_v9_recon_framework_operator_flow.png)
+![LakePINN v9 reconstruction framework](./docs/figures/lakepinn_v9_generated_recon_framework_operator_flow.png)
 
-![LakePINN v9 R11 export modes RMSE](./docs/figures/lakepinn_v9_r11_export_modes_rmse.png)
+![LakePINN v9 R11 export modes RMSE](./docs/figures/lakepinn_v9_generated_r11_export_modes_rmse.png)
 
-![LakePINN v9 R11 lake-type RMSE and bias](./docs/figures/lakepinn_v9_r11_laketype_bias_rmse.png)
+![LakePINN v9 R11 lake-type RMSE and bias](./docs/figures/lakepinn_v9_generated_r11_laketype_bias_rmse.png)
 
 更多指标见 [`第九版/实验总结.md`](./第九版/实验总结.md) 与 [`EXPERIMENTS.md`](./EXPERIMENTS.md)。
 

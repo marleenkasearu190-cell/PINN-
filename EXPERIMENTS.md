@@ -21,9 +21,9 @@
 
 代表图：
 
-- [reconstruction framework](./docs/figures/lakepinn_v9_recon_framework_operator_flow.png)
-- [R11 export modes RMSE](./docs/figures/lakepinn_v9_r11_export_modes_rmse.png)
-- [R11 lake-type RMSE and bias](./docs/figures/lakepinn_v9_r11_laketype_bias_rmse.png)
+- [reconstruction framework](./docs/figures/lakepinn_v9_generated_recon_framework_operator_flow.png)
+- [R11 export modes RMSE](./docs/figures/lakepinn_v9_generated_r11_export_modes_rmse.png)
+- [R11 lake-type RMSE and bias](./docs/figures/lakepinn_v9_generated_r11_laketype_bias_rmse.png)
 
 ## 第八版主结果
 

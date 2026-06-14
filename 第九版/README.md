@@ -45,11 +45,11 @@ epoch: 47
 
 ## 代表图
 
-![Framework](../docs/figures/lakepinn_v9_recon_framework_operator_flow.png)
+![Framework](../docs/figures/lakepinn_v9_generated_recon_framework_operator_flow.png)
 
-![R11 export modes](../docs/figures/lakepinn_v9_r11_export_modes_rmse.png)
+![R11 export modes](../docs/figures/lakepinn_v9_generated_r11_export_modes_rmse.png)
 
-![R11 lake type](../docs/figures/lakepinn_v9_r11_laketype_bias_rmse.png)
+![R11 lake type](../docs/figures/lakepinn_v9_generated_r11_laketype_bias_rmse.png)
 
 完整指标见 [`实验总结.md`](./实验总结.md)。
 
