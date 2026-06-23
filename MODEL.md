@@ -1,40 +1,42 @@
 # 模型说明
 
-当前主线是 `第九版/lake_pinn`。模型延续 reconstruction-state / state-space forecaster：以当前温度剖面状态、气象强迫、LST 信息和湖泊属性为输入，预测下一步剖面演化，并在滚动过程中约束物理一致性。第九版的重点不是新增一个单纯数值最优热图，而是围绕 zero-profile reconstruction、support profile 校正和 few-shot 迁移失败来源做系统诊断。
+当前主线是 `第十版/lake_pinn`。模型延续 reconstruction-state / state-space forecaster：先构造或重建当前温度剖面状态，再结合气象强迫、LST 信息和湖泊静态属性预测后续剖面演化，并在训练和诊断中加入物理一致性约束。
 
 ## 核心结构
 
 - `state_model.py` 定义状态推进网络、forcing batch、lake static features、residual tendency 和物理缩放参数。
-- `state_multilake.py` 负责多湖 manifest 训练、heldout lake 评估、segment rollout、rolling horizon、reconstruction export 和 scorecard 集成。
-- `state_reconstruction.py` 提供 initial state reconstruction、support assimilation、LSWT observer update、zero-profile 初始化和 rollout state 工具。
-- `vertical_solver.py` 与 `hypsometry.py` 提供垂向扩散、层厚和湖盆面积剖面处理。
-- `physics.py`、`forcing.py`、`conditional_priors.py` 提供水密度、湍流通量、表层强迫修正、条件先验和 warm/deep lake 约束。
-- `scripts/` 下的 pipeline controller、roadmap、tiered smoke 和 R19-R35 诊断脚本用于组织第九版 reconstruction 实验。
+- `state_multilake.py` 负责多湖 manifest 训练、group-kfold split、heldout diagnostic、rolling metrics、zero-profile export validation 和 CLI。
+- `state_reconstruction.py` 提供 initial state reconstruction、support assimilation、zero-profile prior、EOF/PCA basis 和 LSWT observer 工具。
+- `unlabeled_heat_closure.py` 构造无剖面日期 heat-closure windows。
+- `vertical_solver.py`、`hypsometry.py`、`physics.py`、`forcing.py` 和 `conditional_priors.py` 提供垂向扩散、湖盆面积、密度、通量和条件先验支持。
 
-## 第九版新增重点
+## 第十版新增重点
 
-- zero-profile reconstruction：在缺少目标剖面初始化时，显式评估从先验状态进入 rollout 的误差来源。
-- support profile assimilation：用少量 support profile 校正 query-start 初始状态，并检查校正是否朝观测方向移动。
-- sparse observer / LSWT observer autopsy：分析表层 LST 更新是否过深、过强，或在不同湖泊类型上产生相反偏差。
-- tiered experiment control：通过 L1/L2/L3/L4/L7 分层 smoke、diagnostic 和 overnight 任务减少盲目长跑。
-- diagnostic-only export modes：区分 free、support_train、profile_train、support_all、profile_all 等 export 口径，避免把带观测锚定的诊断结果误当 formal transfer claim。
+- zero-profile EOF/PCA init-net：从 train-only thermal basis 构造低秩初始剖面，并允许小幅 train-supervised correction。
+- daily-memory 分支：学习逐日低秩 profile memory，用于和 `init_physics_rollout` 主线比较。
+- model-mainline 解析：显式区分 `init_physics_rollout` 与 `daily_memory`，减少隐式分支配置造成的误读。
+- unlabeled heat-closure：尝试在无剖面日期使用外部热收支约束训练信号。
+- GPU batch autotune 和 target matrix cache：提升多湖训练的批量选择和重复计算稳定性。
+- source package hygiene：用 allow-list 导出可公开源码包，避免夹带本地实验输出。
 
 ## 公共接口
 
-主要入口：
+主要 CLI：
 
 ```powershell
-Push-Location ".\第九版"
-python -m lake_pinn --manifest "..\path\to\manifest.json" --output-dir "..\outputs\v9_run"
+Push-Location ".\第十版"
+python -m lake_pinn --manifest "..\path\to\manifest.json" --output-dir "..\outputs\v10_run"
 Pop-Location
 ```
 
-Python API 入口集中在 `lake_pinn.api`，CLI 入口由 `lake_pinn.__main__` 调用 `state_multilake.main()`。
+Python API 入口集中在 `lake_pinn.api`；`lake_pinn.__main__` 调用 `state_multilake.main()`。
 
 ## 评估逻辑
 
-第九版评估时区分三类结果：
+第十版评估时区分三类结果：
 
-- main record：`RECON_L3_SUPPORT_DELTA_MAGNITUDE_OVERNIGHT_v1`，以 validation few-shot 30d/60d 和 rolling-start 30d/60d 为主。
-- diagnostic consistency：1d closed-loop 与 teacher-forced transition 是否一致，support update 是否改善 query-start profile。
-- diagnostic-only export：R11 export modes 和 lake-type bias/RMSE 只用于定位误差来源，不作为正式泛化主结果。
+- main diagnostic record：R42 group-kfold epoch-2 diagnostic，用于验证工程主线和 split 诊断。
+- transition / rolling / zero-profile diagnostics：用于定位 initial state、daily memory 和 physics rollout 的误差来源。
+- heat-closure diagnostics：用于判断无剖面物理约束是否形成有效训练信号。
+
+当前 R42 是 diagnostic-only，不替代第八版 R9 的跨湖 heldout 长时段结论。

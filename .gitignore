@@ -29,6 +29,8 @@ PINN_repro_score_outputs*/
 *.zip
 *.pptx
 *.log
+*.out
+*.err
 *.gz
 *.pid
 pid.txt

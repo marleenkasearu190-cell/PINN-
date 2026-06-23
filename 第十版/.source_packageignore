@@ -1,0 +1,23 @@
+# Source package hygiene for LakePINN v10.
+# The export script uses an allow-list first, then applies these exclusions.
+
+results/
+checkpoints/
+raw_remote/
+remote_jobs/
+
+.git/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+*.pt
+*.pth
+*.ckpt
+*.zip
+*.tar
+*.tar.gz
